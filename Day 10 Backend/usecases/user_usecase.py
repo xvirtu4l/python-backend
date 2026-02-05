@@ -14,3 +14,6 @@ class UserUseCase:
         user = User(email, username, password)
         self.repo.add_user(user)
         return user
+    
+    def get_user_by_username(self, username: str):
+        return self.repo.get_user_by_username(username)
