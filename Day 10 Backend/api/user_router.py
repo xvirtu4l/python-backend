@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from usecases.user_usecase import UserUseCase
 from schemas.user_schema import UserResponse, UserRequest
 from factories.user_factory import get_user_usecase
@@ -20,4 +20,7 @@ def get_users(usecase: UserUseCase = Depends(get_user_usecase)):
     return [
         UserResponse(email=user.email, username=user.username) for user in users
     ]
-    
+
+@router.get("/me")
+def me(request: Request):
+    return request.state.user
