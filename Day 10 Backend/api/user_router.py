@@ -4,6 +4,8 @@ from schemas.user_schema import UserResponse, UserRequest
 from factories.user_factory import get_user_usecase
 from domain.exceptions import BusinessError
 
+from security.oauth2 import oauth2_scheme
+
 
 router = APIRouter(prefix="/users", tags=["users"])
 @router.post("/create", response_model=UserResponse, status_code=201)
@@ -22,5 +24,5 @@ def get_users(usecase: UserUseCase = Depends(get_user_usecase)):
     ]
 
 @router.get("/me")
-def me(request: Request):
+def me(request: Request, token: str = Depends(oauth2_scheme)):
     return request.state.user

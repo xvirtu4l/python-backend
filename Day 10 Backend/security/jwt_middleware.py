@@ -20,7 +20,8 @@ class JWTMiddleware(BaseHTTPMiddleware):
             response = await call_next(request)
             return response
         
-        auth_header = request.headers.get("Authorization")
+        auth_header = request.headers.get("authorization")
+        
         if not auth_header or not auth_header.startswith("Bearer "):
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
