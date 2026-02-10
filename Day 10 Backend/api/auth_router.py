@@ -2,14 +2,21 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 
 from factories.auth_factory import get_auth_usecase
+from usecases.auth_usecase import AuthUseCase
+
 from security.jwt_service import create_access_token, decode_token
 from security.oauth2 import oauth2_scheme
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
+def auth_service_dep() -> AuthUseCase:
+    return get_auth_usecase()
+
 @router.post("/login")
-async def login(form_data: OAuth2PasswordRequestForm = Depends()):
-    auth_usecase = get_auth_usecase()
+async def login(
+    form_data: OAuth2PasswordRequestForm = Depends(), 
+    auth_usecase: AuthUseCase = Depends(auth_service_dep)
+):
     user = auth_usecase.authenticate_user(form_data.username, form_data.password)
     if not user:
         raise HTTPException(status_code=401, detail="Invalid username or password")
