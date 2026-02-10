@@ -6,6 +6,7 @@ from usecases.auth_usecase import AuthUseCase
 
 from security.jwt_service import create_access_token, decode_token
 from security.oauth2 import oauth2_scheme
+from schemas.auth_schema import AuthResponse
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -24,7 +25,13 @@ async def login(
     access_token = create_access_token(data={"sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
-@router.get("/me")
-def read_me(token: str = Depends(oauth2_scheme)):
-    payload = decode_token(token)
-    return {"username": payload.get("sub")}
+@router.get("/me", response_model=AuthResponse)
+def read_me(
+    token: str = Depends(oauth2_scheme), 
+    auth_usecase: AuthUseCase = Depends(auth_service_dep)
+):
+    user = auth_usecase.get_current_user(token)
+    return AuthResponse(
+        email = user.email,
+        username = user.username
+    )
