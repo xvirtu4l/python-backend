@@ -7,7 +7,7 @@ from security.oauth2 import oauth2_scheme
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-@router.post("/token")
+@router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     auth_usecase = get_auth_usecase()
     user = auth_usecase.authenticate_user(form_data.username, form_data.password)
