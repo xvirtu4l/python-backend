@@ -6,7 +6,7 @@ from security.jwt_service import create_access_token
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
-@router.post("/token")
+@router.post("/login")
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     auth_service = get_auth_service()
     user = auth_service.authenticate_user(form_data.username, form_data.password)
