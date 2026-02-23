@@ -11,12 +11,19 @@ class DatabaseConfig:
     name: str
     user: str
     password: str
+
+@dataclass
+class JWTConfig:
+    secret_key: str
+    algorithm: str
+    access_token_expire_minutes: int
     
 @dataclass
 class AppConfig:
     env: str
     db_type: str
     database: DatabaseConfig
+    jwt: JWTConfig
     
 def get_settings() -> AppConfig:
     return AppConfig(
@@ -28,5 +35,10 @@ def get_settings() -> AppConfig:
                 user=os.getenv("DB_USER"),
                 password=os.getenv("DB_PASSWORD"),
                 name=os.getenv("DB_NAME"),
+          ),
+          jwt=JWTConfig(
+              secret_key=os.getenv("SECRET_KEY"),
+              algorithm=os.getenv("ALGORITHM", "HS256"),
+              access_token_expire_minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
           )
     )

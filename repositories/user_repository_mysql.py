@@ -4,7 +4,6 @@ from database.mysql_conn import get_connection
 from mysql.connector.errors import IntegrityError
 from domain.exceptions import DuplicateUserError
 
-
 class UserRepositoryMySQL(UserRepository):
     def __init__(self, db_config):
         self.db_config = db_config
@@ -35,4 +34,18 @@ class UserRepositoryMySQL(UserRepository):
         finally:
             cursor.close()
             session.close()
-        
+            
+            
+    def get_user_by_username(self, username):
+        session = get_connection(self.db_config)
+        cursor = session.cursor(dictionary=True)
+        try:
+            cursor.execute("SELECT email, username, password FROM users WHERE username = %s", (username,))
+            row = cursor.fetchone()
+            if row:
+                return User(row["email"], row["username"], row["password"])
+            return None
+        finally:
+            cursor.close()
+            session.close()
+            

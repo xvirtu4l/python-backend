@@ -16,3 +16,7 @@ class UserRepository:
     @abstractmethod
     def get_all_users(self):
         pass
+    
+    @abstractmethod
+    def get_user_by_username(self, username: str):
+        pass

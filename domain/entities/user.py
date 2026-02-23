@@ -20,8 +20,8 @@ class User:
         if not password:
             raise ValueError("password_required")
 
-        if len(password) < 8:
-            raise ValueError("password_too_short")
+        # if len(password) < 8:
+        #     raise ValueError("password_too_short")
         
         if username.lower() == "admin":
             raise ValueError("username_reserved")
