@@ -6,7 +6,8 @@ from starlette import status
 from security.jwt_service import decode_token
 
 PUBLIC_PATHS = {
-    "/api/auth/login", 
+    "/api/auth/login",
+    "/users/create",
     "/docs", 
     "/openapi.json", 
     "/redoc"

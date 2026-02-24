@@ -20,7 +20,7 @@ def create(req: UserRequest, usecase: UserUseCase = Depends(get_user_usecase)):
 def get_users(usecase: UserUseCase = Depends(get_user_usecase)):
     users = usecase.get_users()
     return [
-        UserResponse(email=user.email, username=user.username) for user in users
+        UserResponse(email=user.email, username=user.username, is_active=user.is_active, created_at=user.created_at, updated_at=user.updated_at) for user in users
     ]
 
 @router.get("/me")

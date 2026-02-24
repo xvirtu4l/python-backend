@@ -33,5 +33,8 @@ def read_me(
     user = auth_usecase.get_current_user(token)
     return AuthResponse(
         email = user.email,
-        username = user.username
+        username = user.username,
+        is_active= user.is_active,
+        created_at = user.created_at,
+        updated_at = user.updated_at
     )

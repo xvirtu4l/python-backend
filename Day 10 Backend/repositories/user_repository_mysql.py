@@ -13,8 +13,8 @@ class UserRepositoryMySQL(UserRepository):
         cursor = session.cursor()
         try:
             cursor.execute(
-                "INSERT INTO users (email, username, password) VALUES (%s, %s, %s)",
-                (user.email, user.username, user.password)
+                """INSERT INTO users (email, username, password, is_active) VALUES (%s, %s, %s, %s)""",
+                (user.email, user.username, user.password, user.is_active)
             )
             session.commit()
         except IntegrityError:
@@ -30,7 +30,7 @@ class UserRepositoryMySQL(UserRepository):
         try:
             cursor.execute("SELECT * FROM users")
             rows = cursor.fetchall()
-            return [User(row["email"], row["username"], row["password"]) for row in rows]
+            return [User.from_db(row) for row in rows]
         finally:
             cursor.close()
             session.close()
@@ -40,11 +40,10 @@ class UserRepositoryMySQL(UserRepository):
         session = get_connection(self.db_config)
         cursor = session.cursor(dictionary=True)
         try:
-            cursor.execute("SELECT email, username, password FROM users WHERE username = %s", (username,))
+            cursor.execute("SELECT id, email, username, password, is_active, created_at, updated_at FROM users WHERE username = %s", (username,))
             row = cursor.fetchone()
             if row:
-                return User(row["email"], row["username"], row["password"])
-            return None
+                return User.from_db(row)
         finally:
             cursor.close()
             session.close()
