@@ -34,12 +34,13 @@ class UserUseCase:
     def get_user_by_username(self, username: str):
         return self.repo.get_user_by_username(username)
     
-    def reset_password(self, token: str, new_password: str):
-        user = self.repo.get_user_by_reset_token(token)
-        if not user:
-            raise BusinessError("Token không hợp lệ hoặc đã hết hạn")
-        
+    def get_user_by_reset_token(self, token: str):
+        return self.repo.get_user_by_reset_token(token)
+    
+    def update_password(self, user_id: int, new_password: str):
         hashed = self.password_hasher.hash_password(new_password)
+        self.repo.update_password(user_id, hashed)
         
-        self.repo.update_password(user.id, hashed)
-        self.repo.clear_reset_token(user.id)
+    def clear_reset_token(self, user_id: int):
+        return self.repo.clear_reset_token(user_id)
+    

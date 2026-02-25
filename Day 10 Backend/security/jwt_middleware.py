@@ -8,6 +8,7 @@ from security.jwt_service import decode_token
 PUBLIC_PATHS = {
     "/api/auth/login",
     "/api/auth/forgot-password",
+    "/api/auth/reset-password",
     "/users/create",
     "/docs", 
     "/openapi.json", 

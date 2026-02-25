@@ -49,5 +49,7 @@ def forgot_password(email: str, auth_usecase: AuthUseCase = Depends(auth_service
     
 @router.post("/reset-password")
 def reset_password(token: str, new_password: str, auth_usecase: AuthUseCase = Depends(auth_service_dep)):
-    auth_usecase.reset_password(token, new_password)
+    user = auth_usecase.reset_password(token, new_password)
+    if not user:
+        raise HTTPException(status_code=400, detail="Token không hợp lệ hoặc đã hết hạn")
     return {"message": "Mật khẩu đã được đặt lại thành công"}

@@ -51,4 +51,13 @@ class AuthUseCase:
         self.user_usecase.set_reset_password_token(email, token, expired_at)
         return token
     
+    def reset_password(self, token: str, new_password: str):
+        user = self.user_usecase.get_user_by_reset_token(token)
+        if not user:
+            raise BusinessError("Token không hợp lệ hoặc đã hết hạn")
+        hashed = self.password_hasher.hash_password(new_password)
+        self.user_usecase.update_password(user.id, hashed)
+        self.user_usecase.clear_reset_token(user.id)
+        return user
+    
     

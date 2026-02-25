@@ -74,10 +74,11 @@ class UserRepositoryMySQL(UserRepository):
             session.close()
             
     def get_user_by_reset_token(self, token: str):
+       
         session = get_connection(self.db_config)
         cursor = session.cursor(dictionary=True)
         try:
-            cursor.execute("SELECT * FROM users WHERE reset_token = %s AND reset_token_expired_at > NOW()", (token,))
+            cursor.execute("SELECT * FROM users WHERE reset_token = %s AND reset_token_expired_at > UTC_TIMESTAMP()", (token,))
             row = cursor.fetchone()
             if row:
                 return User.from_db(row)
