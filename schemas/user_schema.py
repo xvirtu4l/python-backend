@@ -1,5 +1,6 @@
 from pydantic import BaseModel, EmailStr, Field
 from typing_extensions import Annotated
+from datetime import datetime
 
 class UserRequest(BaseModel):
     email: EmailStr

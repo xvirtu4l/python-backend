@@ -13,8 +13,8 @@ class UserRepositoryMySQL(UserRepository):
         cursor = session.cursor()
         try:
             cursor.execute(
-                "INSERT INTO users (email, username, password) VALUES (%s, %s, %s)",
-                (user.email, user.username, user.password)
+                """INSERT INTO users (email, username, password, is_active) VALUES (%s, %s, %s, %s)""",
+                (user.email, user.username, user.password, user.is_active)
             )
             session.commit()
         except IntegrityError:
@@ -30,7 +30,7 @@ class UserRepositoryMySQL(UserRepository):
         try:
             cursor.execute("SELECT * FROM users")
             rows = cursor.fetchall()
-            return [User(row["email"], row["username"], row["password"]) for row in rows]
+            return [User.from_db(row) for row in rows]
         finally:
             cursor.close()
             session.close()
@@ -40,12 +40,75 @@ class UserRepositoryMySQL(UserRepository):
         session = get_connection(self.db_config)
         cursor = session.cursor(dictionary=True)
         try:
-            cursor.execute("SELECT email, username, password FROM users WHERE username = %s", (username,))
+            cursor.execute("SELECT id, email, username, password, is_active, created_at, updated_at FROM users WHERE username = %s", (username,))
             row = cursor.fetchone()
             if row:
-                return User(row["email"], row["username"], row["password"])
-            return None
+                return User.from_db(row)
+        finally:
+            cursor.close()
+            session.close()
+    
+    def get_user_by_email(self, email):
+        session = get_connection(self.db_config)
+        cursor = session.cursor(dictionary=True)
+        try:
+            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+            row = cursor.fetchone()
+            if row:
+                return User.from_db(row)
+        finally:
+            cursor.close()
+            session.close()
+    
+    def set_reset_password_token(self, email: str, token: str, expired_at):
+        session = get_connection(self.db_config)
+        cursor = session.cursor()
+        try:
+            cursor.execute(
+                """UPDATE users SET reset_token = %s, reset_token_expired_at = %s WHERE email = %s""",
+                (token, expired_at, email)
+            )
+            session.commit()
         finally:
             cursor.close()
             session.close()
             
+    def get_user_by_reset_token(self, token: str):
+        session = get_connection(self.db_config)
+        cursor = session.cursor(dictionary=True)
+        try:
+            cursor.execute("SELECT * FROM users WHERE reset_token = %s AND reset_token_expired_at > NOW()", (token,))
+            row = cursor.fetchone()
+            if row:
+                return User.from_db(row)
+            else:
+                return None
+        finally:
+            cursor.close()
+            session.close()
+            
+    def update_password(self, user_id: int, hashed_password: str):
+        session = get_connection(self.db_config)
+        cursor = session.cursor()
+        try:
+            cursor.execute(
+                """UPDATE users SET password = %s WHERE id = %s""",
+                (hashed_password, user_id)
+            )
+            session.commit()
+        finally:
+            cursor.close()
+            session.close()
+            
+    def clear_reset_token(self, user_id: int):
+        session = get_connection(self.db_config)
+        cursor = session.cursor()
+        try:
+            cursor.execute(
+                """UPDATE users SET reset_token = NULL, reset_token_expired_at = NULL WHERE id = %s""",
+                (user_id,)
+            )
+            session.commit()
+        finally:
+            cursor.close()
+            session.close()

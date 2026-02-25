@@ -31,7 +31,7 @@ def get_settings() -> AppConfig:
           db_type=os.getenv("DB_TYPE", "fake"),
           database=DatabaseConfig(
                 host=os.getenv("DB_HOST"),
-                port=int(os.getenv("DB_PORT", 3306)),
+                port=int(os.getenv("DB_PORT")),
                 user=os.getenv("DB_USER"),
                 password=os.getenv("DB_PASSWORD"),
                 name=os.getenv("DB_NAME"),
