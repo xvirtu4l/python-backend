@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordRequestForm
 
 from factories.auth_factory import get_auth_usecase
@@ -53,3 +53,19 @@ def reset_password(token: str, new_password: str, auth_usecase: AuthUseCase = De
     if not user:
         raise HTTPException(status_code=400, detail="Token không hợp lệ hoặc đã hết hạn")
     return {"message": "Mật khẩu đã được đặt lại thành công"}
+
+@router.post("/change-password")
+def change_password(
+    current_password: str,
+    new_password: str,
+    request: Request,
+    auth_usecase: AuthUseCase = Depends(auth_service_dep)
+):
+    user_payload = request.state.user
+    user_id = user_payload["id"]
+    success = auth_usecase.change_password(user_id, current_password, new_password)
+    
+    if not success:
+        raise HTTPException(status_code=400, detail="Mật khẩu hiện tại không đúng")
+    
+    return {"message": "Mật khẩu đã được thay đổi thành công"}

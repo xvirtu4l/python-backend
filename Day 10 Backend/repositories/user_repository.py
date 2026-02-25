@@ -40,3 +40,9 @@ class UserRepository:
     @abstractmethod
     def clear_reset_token(self, user_id: int):
         pass
+    
+    @abstractmethod
+    def get_user_by_id(self, user_id: int):
+        pass
+    
+    

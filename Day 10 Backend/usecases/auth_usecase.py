@@ -60,4 +60,12 @@ class AuthUseCase:
         self.user_usecase.clear_reset_token(user.id)
         return user
     
-    
+    def change_password(self, user_id: int, old_password: str, new_password: str):
+        user = self.user_usecase.get_user_by_id(user_id)
+        if not user:
+            raise BusinessError("User not Found")
+        if not self.password_hasher.verify_password(old_password, user.password):
+            raise BusinessError("Mật khẩu cũ không đúng")
+        hashed = self.password_hasher.hash_password(new_password)
+        self.user_usecase.update_password(user.id, hashed)
+        return True

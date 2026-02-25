@@ -47,6 +47,18 @@ class UserRepositoryMySQL(UserRepository):
         finally:
             cursor.close()
             session.close()
+            
+    def get_user_by_id(self, user_id):
+        session = get_connection(self.db_config)
+        cursor = session.cursor(dictionary=True)
+        try:
+            cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+            row = cursor.fetchone()
+            if row:
+                return User.from_db(row)
+        finally:
+            cursor.close()
+            session.close()
     
     def get_user_by_email(self, email):
         session = get_connection(self.db_config)

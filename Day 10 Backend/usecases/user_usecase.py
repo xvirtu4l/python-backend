@@ -34,13 +34,16 @@ class UserUseCase:
     def get_user_by_username(self, username: str):
         return self.repo.get_user_by_username(username)
     
+    def get_user_by_id(self, user_id: int):
+        return self.repo.get_user_by_id(user_id)
+    
     def get_user_by_reset_token(self, token: str):
         return self.repo.get_user_by_reset_token(token)
     
     def update_password(self, user_id: int, new_password: str):
         hashed = self.password_hasher.hash_password(new_password)
         self.repo.update_password(user_id, hashed)
-        
+    
     def clear_reset_token(self, user_id: int):
         return self.repo.clear_reset_token(user_id)
     
