@@ -25,5 +25,21 @@ class UserUseCase:
         self.repo.add_user(user)
         return user
     
+    def set_reset_password_token(self, email: str, token: str, expired_at):
+        self.repo.set_reset_password_token(email, token, expired_at)
+    
+    def get_user_by_email(self, email: str):
+        return self.repo.get_user_by_email(email)
+    
     def get_user_by_username(self, username: str):
         return self.repo.get_user_by_username(username)
+    
+    def reset_password(self, token: str, new_password: str):
+        user = self.repo.get_user_by_reset_token(token)
+        if not user:
+            raise BusinessError("Token không hợp lệ hoặc đã hết hạn")
+        
+        hashed = self.password_hasher.hash_password(new_password)
+        
+        self.repo.update_password(user.id, hashed)
+        self.repo.clear_reset_token(user.id)

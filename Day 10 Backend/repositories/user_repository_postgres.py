@@ -34,7 +34,7 @@ class UserRepositoryPostgres(UserRepository):
         try:
             cursor.execute("SELECT email, username, password FROM users")
             rows = cursor.fetchall()
-            return [User(row[0], row[1], row[2]) for row in rows]
+            return [User.from_db(row) for row in rows]
         finally:
             cursor.close()
             session.close()
@@ -49,8 +49,10 @@ class UserRepositoryPostgres(UserRepository):
             )
             row = cursor.fetchone()
             if row:
-                return User(row[0], row[1], row[2])
+                return User.from_db(row)
             return None
         finally:
             cursor.close()
             session.close()
+            
+    

@@ -1,6 +1,8 @@
+import uuid
 from repositories.user_repository import UserRepository
 from usecases.password_hasher import PasswordHasher
 from domain.exceptions import BusinessError
+from datetime import datetime, timedelta, timezone
 
 class AuthUseCase:
     def __init__(self, user_usecase: UserRepository, password_hasher: PasswordHasher, create_token, decode_token):
@@ -38,3 +40,15 @@ class AuthUseCase:
             raise BusinessError("User not Found")
         
         return user
+    
+    def forgot_password(self, email: str):
+        user = self.user_usecase.get_user_by_email(email)
+        if not user:
+            raise BusinessError("User not Found")
+        
+        token = str(uuid.uuid4())
+        expired_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+        self.user_usecase.set_reset_password_token(email, token, expired_at)
+        return token
+    
+    

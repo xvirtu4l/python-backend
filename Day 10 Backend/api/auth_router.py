@@ -38,3 +38,16 @@ def read_me(
         created_at = user.created_at,
         updated_at = user.updated_at
     )
+    
+@router.post("/forgot-password")
+def forgot_password(email: str, auth_usecase: AuthUseCase = Depends(auth_service_dep)):
+    token = auth_usecase.forgot_password(email)
+    return {
+        "message": "Token reset password đã được gửi",
+        "token": token
+        }
+    
+@router.post("/reset-password")
+def reset_password(token: str, new_password: str, auth_usecase: AuthUseCase = Depends(auth_service_dep)):
+    auth_usecase.reset_password(token, new_password)
+    return {"message": "Mật khẩu đã được đặt lại thành công"}
