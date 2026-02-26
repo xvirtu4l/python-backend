@@ -11,7 +11,7 @@ class UserRepositoryPostgres(UserRepository):
 
     def add_user(self, user: User):
         session = get_postgres_connection()
-        cursor = session.cursor()
+        cursor = session.cursor(dictionary=True)
         try:
             cursor.execute(
                 """
@@ -30,7 +30,7 @@ class UserRepositoryPostgres(UserRepository):
 
     def get_all_users(self):
         session = get_postgres_connection()
-        cursor = session.cursor()
+        cursor = session.cursor(dictionary=True)
         try:
             cursor.execute("SELECT email, username, password FROM users")
             rows = cursor.fetchall()
@@ -41,7 +41,7 @@ class UserRepositoryPostgres(UserRepository):
 
     def get_user_by_username(self, username):
         session = get_postgres_connection()
-        cursor = session.cursor()
+        cursor = session.cursor(dictionary=True)
         try:
             cursor.execute(
                 "SELECT email, username, password FROM users WHERE username = %s",
@@ -55,4 +55,80 @@ class UserRepositoryPostgres(UserRepository):
             cursor.close()
             session.close()
             
+    def get_user_by_id(self, user_id):
+        session = get_postgres_connection()
+        cursor = session.cursor(dictionary=True)
+        try:
+            cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+            row = cursor.fetchone()
+            if row:
+                return User.from_db(row)
+        finally:
+            cursor.close()
+            session.close()
     
+    def get_user_by_email(self, email):
+        session = get_postgres_connection()
+        cursor = session.cursor(dictionary=True)
+        try:
+            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+            row = cursor.fetchone()
+            if row:
+                return User.from_db(row)
+        finally:
+            cursor.close()
+            session.close()
+    
+    def set_reset_password_token(self, email: str, token: str, expired_at):
+        session = get_postgres_connection()
+        cursor = session.cursor()
+        try:
+            cursor.execute(
+                """UPDATE users SET reset_token = %s, reset_token_expired_at = %s WHERE email = %s""",
+                (token, expired_at, email)
+            )
+            session.commit()
+        finally:
+            cursor.close()
+            session.close()
+            
+    def get_user_by_reset_token(self, token: str):
+       
+        session = get_postgres_connection()
+        cursor = session.cursor(dictionary=True)
+        try:
+            cursor.execute("SELECT * FROM users WHERE reset_token = %s AND reset_token_expired_at > UTC_TIMESTAMP()", (token,))
+            row = cursor.fetchone()
+            if row:
+                return User.from_db(row)
+            else:
+                return None
+        finally:
+            cursor.close()
+            session.close()
+            
+    def update_password(self, user_id: int, hashed_password: str):
+        session = get_postgres_connection()
+        cursor = session.cursor()
+        try:
+            cursor.execute(
+                """UPDATE users SET password = %s WHERE id = %s""",
+                (hashed_password, user_id)
+            )
+            session.commit()
+        finally:
+            cursor.close()
+            session.close()
+            
+    def clear_reset_token(self, user_id: int):
+        session = get_postgres_connection()
+        cursor = session.cursor()
+        try:
+            cursor.execute(
+                """UPDATE users SET reset_token = NULL, reset_token_expired_at = NULL WHERE id = %s""",
+                (user_id,)
+            )
+            session.commit()
+        finally:
+            cursor.close()
+            session.close()
