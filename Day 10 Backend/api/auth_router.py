@@ -6,6 +6,7 @@ from usecases.auth_usecase import AuthUseCase
 
 from security.jwt_service import create_access_token, decode_token
 from security.oauth2 import oauth2_scheme
+from security.token_blacklist import blacklisted_tokens
 from schemas.auth_schema import AuthResponse
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -24,6 +25,11 @@ async def login(
     
     access_token = create_access_token(data={"id": user.id, "sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
+
+@router.post("/logout")
+def logout(token: str = Depends(oauth2_scheme)):
+    blacklisted_tokens.add(token)
+    return {"message": "Đăng xuất thành công"}
 
 @router.get("/me", response_model=AuthResponse)
 def read_me(

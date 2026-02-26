@@ -4,6 +4,7 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from starlette import status
 
 from security.jwt_service import decode_token
+from security.token_blacklist import blacklisted_tokens
 
 PUBLIC_PATHS = {
     "/api/auth/login",
@@ -32,6 +33,12 @@ class JWTMiddleware(BaseHTTPMiddleware):
             )
             
         token = auth_header.split(" ", 1)[1]
+        
+        if token in blacklisted_tokens:
+            return JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={"detail": "Token has been blacklisted"}
+            )
         
         try:
             payload = decode_token(token)
