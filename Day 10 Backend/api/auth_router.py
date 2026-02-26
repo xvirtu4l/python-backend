@@ -22,7 +22,7 @@ async def login(
     if not user:
         raise HTTPException(status_code=401, detail="Tên người dùng hoặc mật khẩu không hợp lệ")
     
-    access_token = create_access_token(data={"sub": user.username})
+    access_token = create_access_token(data={"id": user.id, "sub": user.username})
     return {"access_token": access_token, "token_type": "bearer"}
 
 @router.get("/me", response_model=AuthResponse)
@@ -56,12 +56,15 @@ def reset_password(token: str, new_password: str, auth_usecase: AuthUseCase = De
 
 @router.post("/change-password")
 def change_password(
+    request: Request,
     current_password: str,
     new_password: str,
-    request: Request,
+    token: str = Depends(oauth2_scheme),
     auth_usecase: AuthUseCase = Depends(auth_service_dep)
 ):
+    print("DEBUG: Authorization header =", request.headers.get("authorization"))
     user_payload = request.state.user
+    print("DEBUG: User payload from JWT =", user_payload)
     user_id = user_payload["id"]
     success = auth_usecase.change_password(user_id, current_password, new_password)
     

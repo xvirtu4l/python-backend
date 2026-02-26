@@ -24,7 +24,7 @@ class JWTMiddleware(BaseHTTPMiddleware):
             return response
         
         auth_header = request.headers.get("authorization")
-        
+        # print("DEBUG: JWTMiddleware - Authorization header:", request.headers.get("authorization"))
         if not auth_header or not auth_header.startswith("Bearer "):
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
@@ -35,8 +35,10 @@ class JWTMiddleware(BaseHTTPMiddleware):
         
         try:
             payload = decode_token(token)
+            # print("DEBUG: JWTMiddleware - payload:", payload)
             request.state.user = payload
-        except Exception:
+        except Exception as e:
+            # print("DEBUG: JWTMiddleware - decode error:", e)
             return JSONResponse(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 content={"detail": "Invalid or expired token"}

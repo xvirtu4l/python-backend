@@ -24,7 +24,7 @@ class AuthUseCase:
         if not user:
             return None
         
-        token = self.create_token({"sub": user.username})
+        token = self.create_token({"id": user.id, "sub": user.username})
         return token    
     
     def get_current_user(self, token: str):
