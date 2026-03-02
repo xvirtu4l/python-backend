@@ -25,6 +25,13 @@ class AppConfig:
     database: DatabaseConfig
     jwt: JWTConfig
     
+@dataclass
+class MinIOConfig:
+    endpoint: str
+    access_key: str
+    secret_key: str
+    bucket: str
+    
 def get_settings() -> AppConfig:
     return AppConfig(
           env=os.getenv("APP_ENV", "dev"),
@@ -40,5 +47,11 @@ def get_settings() -> AppConfig:
               secret_key=os.getenv("SECRET_KEY"),
               algorithm=os.getenv("ALGORITHM", "HS256"),
               access_token_expire_minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
+          ),
+          minio=MinIOConfig(
+              endpoint=os.getenv("MINIO_ENDPOINT", "localhost:9000"),
+                access_key=os.getenv("MINIO_ACCESS_KEY"),
+                secret_key=os.getenv("MINIO_SECRET_KEY"),
+                bucket=os.getenv("MINIO_BUCKET", "avatars")
           )
     )
