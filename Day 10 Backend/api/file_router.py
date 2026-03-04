@@ -17,6 +17,7 @@ def create_upload_url(
 @router.get("/{file_name}")
 def get_file_url(
     file_name: str,
+    token: str = Depends(oauth2_scheme),
     usecase: FileUsecase = Depends(get_file_usecase)
 ):
-    return usecase.get_file_url(file_name)
+    return usecase.generate_download_url(file_name)
