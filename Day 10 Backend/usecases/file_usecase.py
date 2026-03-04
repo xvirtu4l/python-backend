@@ -33,3 +33,15 @@ class FileUsecase:
             "object_name": object_name,
             "upload_url": url
         }
+
+    def generate_download_url(self, file_id: str):
+        download_url = self.minio.presigned_get_object(
+            bucket_name=self.bucket,
+            object_name=file_id,
+            expires=timedelta(minutes=15),
+        )
+
+        return {
+            "file_id": file_id,
+            "download_url": download_url
+        }
