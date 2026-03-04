@@ -17,6 +17,15 @@ class JWTConfig:
     secret_key: str
     algorithm: str
     access_token_expire_minutes: int
+        
+@dataclass
+class MinIOConfig:
+    endpoint: str
+    access_key: str
+    secret_key: str
+    bucket: str
+    
+    
     
 @dataclass
 class AppConfig:
@@ -24,13 +33,9 @@ class AppConfig:
     db_type: str
     database: DatabaseConfig
     jwt: JWTConfig
-    
-@dataclass
-class MinIOConfig:
-    endpoint: str
-    access_key: str
-    secret_key: str
-    bucket: str
+    minio: MinIOConfig
+
+
     
 def get_settings() -> AppConfig:
     return AppConfig(

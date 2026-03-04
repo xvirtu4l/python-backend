@@ -3,12 +3,14 @@ from fastapi.responses import JSONResponse
 from domain.exceptions import BusinessError, DuplicateUserError
 from api.user_router import router as user_router
 from api.auth_router import router as auth_router
+from api.file_router import router as file_router
 from security.jwt_middleware import JWTMiddleware
 
 app = FastAPI(title="Quản lý người dùng")
 app.add_middleware(JWTMiddleware)
 app.include_router(user_router)
 app.include_router(auth_router)
+app.include_router(file_router)
 
 @app.get("/")
 

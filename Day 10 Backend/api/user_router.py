@@ -5,6 +5,7 @@ from factories.user_factory import get_user_usecase
 from domain.exceptions import BusinessError
 
 from security.oauth2 import oauth2_scheme
+from security.jwt_service import get_current_user
 
 
 router = APIRouter(prefix="/users", tags=["users"])
@@ -26,3 +27,16 @@ def get_users(usecase: UserUseCase = Depends(get_user_usecase)):
 @router.get("/me")
 def me(request: Request, token: str = Depends(oauth2_scheme)):
     return request.state.user
+
+@router.put("/avatar")
+def update_avatar(
+    object_name: str,
+    current_user: dict = Depends(get_current_user),
+    usecase: UserUseCase = Depends(get_user_usecase)
+):
+    print(current_user)
+    try:
+        usecase.update_avatar(current_user["id"], object_name)
+        return {"message": "Cập nhật avatar thành công"}
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))

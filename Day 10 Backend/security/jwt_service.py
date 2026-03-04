@@ -5,6 +5,10 @@ from typing import Dict, Any
 
 import jwt
 from jwt.exceptions import InvalidTokenError
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
 settings = get_settings()
 jwt_config = settings.jwt
@@ -22,3 +26,13 @@ def decode_token(token: str) -> Dict[str, Any]:
         return decoded_payload
     except InvalidTokenError:
         raise InvalidTokenError("Token không hợp lệ hoặc đã hết hạn")
+    
+def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
+    try:
+        payload = decode_token(token)
+        return payload
+    except InvalidTokenError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Token không hợp lệ hoặc đã hết hạn",
+        )

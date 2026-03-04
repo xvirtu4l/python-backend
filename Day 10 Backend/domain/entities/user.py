@@ -8,6 +8,7 @@ class User:
         is_active: bool = True,
         created_at=None,
         updated_at=None,
+        avatar_url: str | None = None,
         validate: bool = True
     ):
         if validate:
@@ -20,6 +21,7 @@ class User:
         self.is_active = is_active
         self.created_at = created_at
         self.updated_at = updated_at
+        self.avatar_url = avatar_url
         
     @classmethod
     def from_db(cls, row: dict):
@@ -31,6 +33,7 @@ class User:
             is_active=row["is_active"],
             created_at=row["created_at"],
             updated_at=row["updated_at"],
+            avatar_url=row["avatar_url"],
             validate=False
         )
 

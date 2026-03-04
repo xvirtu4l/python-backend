@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
 from fastapi.security import OAuth2PasswordRequestForm
 
 from factories.auth_factory import get_auth_usecase

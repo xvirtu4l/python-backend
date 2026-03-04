@@ -40,7 +40,7 @@ class UserRepositoryMySQL(UserRepository):
         session = get_connection(self.db_config)
         cursor = session.cursor(dictionary=True)
         try:
-            cursor.execute("SELECT id, email, username, password, is_active, created_at, updated_at FROM users WHERE username = %s", (username,))
+            cursor.execute("SELECT id, email, username, password, is_active, created_at, updated_at, avatar_url FROM users WHERE username = %s", (username,))
             row = cursor.fetchone()
             if row:
                 return User.from_db(row)
@@ -120,6 +120,19 @@ class UserRepositoryMySQL(UserRepository):
             cursor.execute(
                 """UPDATE users SET reset_token = NULL, reset_token_expired_at = NULL WHERE id = %s""",
                 (user_id,)
+            )
+            session.commit()
+        finally:
+            cursor.close()
+            session.close()
+            
+    def update_avatar(self, user_id: int, avatar_url: str):
+        session = get_connection(self.db_config)
+        cursor = session.cursor()
+        try:
+            cursor.execute(
+                "UPDATE users SET avatar_url = %s WHERE id = %s",
+                (avatar_url, user_id)
             )
             session.commit()
         finally:
