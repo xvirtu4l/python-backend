@@ -68,9 +68,9 @@ def change_password(
     token: str = Depends(oauth2_scheme),
     auth_usecase: AuthUseCase = Depends(auth_service_dep)
 ):
-    print("DEBUG: Authorization header =", request.headers.get("authorization"))
+    # print("DEBUG: Authorization header =", request.headers.get("authorization"))
     user_payload = request.state.user
-    print("DEBUG: User payload from JWT =", user_payload)
+    # print("DEBUG: User payload from JWT =", user_payload)
     user_id = user_payload["id"]
     success = auth_usecase.change_password(user_id, current_password, new_password)
     

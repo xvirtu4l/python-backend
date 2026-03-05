@@ -49,12 +49,20 @@ class UserUseCase:
     
     def update_avatar(self, user_id: int, object_name: str):
         user = self.repo.get_user_by_id(user_id)
+        
+        if not user:
+            raise BusinessError("Người dùng không tồn tại")
+        
         old_avatar = user.avatar_url
         
         if old_avatar:
-            self.minio.remove_object(
+            try:
+                self.minio.remove_object(
                 bucket_name=self.bucket,
                 object_name=old_avatar
             )
+            except Exception as e:
+                print(f"Avatar not found in MinIO: {e}")
+                pass
         
         self.repo.update_avatar(user_id, object_name)
