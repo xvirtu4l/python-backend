@@ -25,7 +25,14 @@ class MinIOConfig:
     secret_key: str
     bucket: str
     
-    
+@dataclass
+class LLMConfig:
+    provider: str
+    model: str
+    api_key: str
+    base_url: str
+    http_referer: str
+    x_title: str
     
 @dataclass
 class AppConfig:
@@ -34,7 +41,7 @@ class AppConfig:
     database: DatabaseConfig
     jwt: JWTConfig
     minio: MinIOConfig
-
+    llm: LLMConfig
 
     
 def get_settings() -> AppConfig:
@@ -54,9 +61,17 @@ def get_settings() -> AppConfig:
               access_token_expire_minutes=int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
           ),
           minio=MinIOConfig(
-              endpoint=os.getenv("MINIO_ENDPOINT", "localhost:9000"),
-                access_key=os.getenv("MINIO_ACCESS_KEY"),
-                secret_key=os.getenv("MINIO_SECRET_KEY"),
-                bucket=os.getenv("MINIO_BUCKET", "avatars")
-          )
+            endpoint=os.getenv("MINIO_ENDPOINT", "localhost:9000"),
+            access_key=os.getenv("MINIO_ACCESS_KEY"),
+            secret_key=os.getenv("MINIO_SECRET_KEY"),
+            bucket=os.getenv("MINIO_BUCKET", "avatars")
+          ),
+          llm=LLMConfig(
+            provider=os.getenv("LLM_PROVIDER", "openrouter"),
+            model=os.getenv("LLM_MODEL", "stepfun/step-3.5-flash:free"),
+            api_key=os.getenv("LLM_API_KEY"),   
+            base_url=os.getenv("LLM_BASE_URL", "https://openrouter.ai/api/v1"),
+            http_referer=os.getenv("LLM_HTTP_REFERER", "http://localhost:8000"),
+            x_title=os.getenv("LLM_X_TITLE", "Chatbot App")
+        )
     )
