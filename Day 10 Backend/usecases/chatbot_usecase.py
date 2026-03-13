@@ -5,7 +5,7 @@ from repositories.conversation_repository import ConversationRepository
 from repositories.message_repository import MessageRepository
 from repositories.llm_repository import LLMRepository
 from repositories.user_repository import UserRepository
-from domain.exceptions import BusinessError
+from domain.exceptions import BusinessError, AccessDeniedError, NotFoundError
 
 class ChatbotUseCase:
     def __init__(
@@ -27,16 +27,16 @@ class ChatbotUseCase:
         
         user = self.user_repo.get_user_by_id(user_id)
         if not user:
-            raise BusinessError("User not found")
+            raise NotFoundError("User not found")
         if not user.is_active:
             raise BusinessError("Account disabled.")
         
         if conversation_id:
             conversation = self.conversation_repo.get_conversation_by_id(conversation_id)
             if not conversation:
-                raise BusinessError("Conversation not found")
+                raise NotFoundError("Conversation not found")
             if conversation.user_id != user_id:
-                raise BusinessError("Access denied to this conversation")
+                raise AccessDeniedError("Access denied to this conversation")
         
         if conversation_id is None:
             conversation = self.conversation_repo.create_conversation(user_id, title=user_message[:50] if len(user_message) > 50 else user_message)
@@ -79,9 +79,9 @@ class ChatbotUseCase:
     def get_conversation_history(self, user_id: int, conversation_id: int) -> List[Message]:
         conversation = self.conversation_repo.get_conversation_by_id(conversation_id)
         if not conversation:
-            raise BusinessError("Conversation not found")
+            raise NotFoundError("Conversation not found")
         if conversation.user_id != user_id:
-            raise BusinessError("Access denied.")
+            raise AccessDeniedError("Access denied.")
         
         messages = self.message_repo.get_messages_by_conversation_id(conversation_id)
         return conversation, messages
@@ -93,9 +93,9 @@ class ChatbotUseCase:
     def delete_conversation(self, user_id: int, conversation_id: int):
         conversation = self.conversation_repo.get_conversation_by_id(conversation_id)
         if not conversation:
-            raise BusinessError("Conversation not found")
+            raise NotFoundError("Conversation not found")
         if conversation.user_id != user_id:
-            raise BusinessError("Access denied.")
+            raise AccessDeniedError("Access denied.")
         
         # Note: Should check if the table has cascading delete for messages, otherwise need to delete messages first
         self.conversation_repo.delete_conversation(conversation_id)

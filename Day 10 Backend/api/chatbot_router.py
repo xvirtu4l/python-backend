@@ -3,7 +3,7 @@ from pydantic import BaseModel, Field
 from typing import List, Optional
 from usecases.chatbot_usecase import ChatbotUseCase
 from factories.chatbot_factory import get_chatbot_usecase
-from domain.exceptions import BusinessError
+from domain.exceptions import BusinessError, NotFoundError, AccessDeniedError
 from security.oauth2 import oauth2_scheme
 
 from schemas.chatbot_schema import (
@@ -41,10 +41,10 @@ async def chat(
     except BusinessError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        # raise HTTPException(status_code=500, detail="Internal server error") from e
-        import traceback
-        traceback.print_exc()
-        raise
+        raise HTTPException(status_code=500, detail="Internal server error") from e
+        # import traceback
+        # traceback.print_exc()
+        # raise
     
 @router.get("/conversations", response_model=List[ConversationResponse])
 async def list_conversations(
@@ -52,18 +52,24 @@ async def list_conversations(
     chatbot_usecase: ChatbotUseCase = Depends(get_chatbot_usecase),
     token: str = Depends(oauth2_scheme)
 ):
-    current_user = request.state.user
-    user_id = current_user["id"]
-    
-    conversations = chatbot_usecase.list_user_conversations(user_id = user_id)
-    return [
-        ConversationResponse(
+    try:
+        current_user = request.state.user
+        user_id = current_user["id"]
+
+        conversations = chatbot_usecase.list_user_conversations(user_id=user_id)
+        return [
+            ConversationResponse(
             id=conv.id,
             title=conv.title,
             created_at=conv.created_at.isoformat(),
             updated_at=conv.updated_at.isoformat()
         ) for conv in conversations
     ]
+        
+    except BusinessError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error") from e
 
 
 @router.get("/conversations/{conversation_id}", response_model=ConversationDetailResponse)
@@ -98,9 +104,13 @@ async def get_conversation(
                 ) for msg in messages
             ]
         )
+        
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    except AccessDeniedError:
+        raise HTTPException(status_code=403, detail="Access denied")
     except BusinessError as e:
-        status_code = 404 if "not found" in str(e).lower() else 403
-        raise HTTPException(status_code=status_code, detail=str(e))
+        raise HTTPException(status_code=400, detail=str(e))
     
 @router.delete("/conversations/{conversation_id}")
 async def delete_conversation(
@@ -118,7 +128,10 @@ async def delete_conversation(
             conversation_id=conversation_id
         )
         return {"message": "Conversation deleted successfully"}
-    except BusinessError as e:
-        status_code = 404 if "not found" in str(e).lower() else 403
-        raise HTTPException(status_code=status_code, detail=str(e))
     
+    except NotFoundError:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    except AccessDeniedError:
+        raise HTTPException(status_code=403, detail="Access denied")
+    except BusinessError as e:
+        raise HTTPException(status_code=400, detail=str(e))
