@@ -39,6 +39,22 @@ class ConversationRepositoryPostgres(ConversationRepository):
             cursor.close()
             session.close()
             
+    def get_conversation_by_user_id(self, user_id) -> Optional[Conversation]:
+        session = get_postgres_connection()
+        cursor = session.cursor(dictionary=True)
+        try:
+            cursor.execute(
+                "SELECT * FROM conversations WHERE user_id = %s ORDER BY created_at DESC LIMIT 1",
+                (user_id,)
+            )
+            row = cursor.fetchone()
+            if row:
+                return Conversation.from_db(row)
+            return None
+        finally:
+            cursor.close()
+            session.close()
+            
     def get_conversation_by_id(self, conversation_id) -> Optional[Conversation]:
         session = get_postgres_connection()
         cursor = session.cursor(dictionary=True)
