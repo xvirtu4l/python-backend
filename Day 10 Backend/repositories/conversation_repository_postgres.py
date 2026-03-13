@@ -16,6 +16,15 @@ class ConversationRepositoryPostgres(ConversationRepository):
                 (user_id, title)
             )
             session.commit()
+            
+            conversation_id = cursor.lastrowid
+            
+            # Fetch the full row with timestamps
+            cursor.execute(
+                "SELECT * FROM conversations WHERE id = %s",
+                (conversation_id,)
+            )
+            
             row = cursor.fetchone()
             return Conversation.from_db(row)
         except Exception as e:
