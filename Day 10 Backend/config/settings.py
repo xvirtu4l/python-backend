@@ -45,16 +45,32 @@ class AppConfig:
 
     
 def get_settings() -> AppConfig:
+    db_type = os.getenv("DB_TYPE", "fake")
+    
+    if db_type == "mysql":
+        db_config = DatabaseConfig(
+            host=os.getenv("DB_HOST"),
+            port=int(os.getenv("DB_PORT")),
+            user=os.getenv("DB_USER"),
+            password=os.getenv("DB_PASSWORD"),
+            name=os.getenv("DB_NAME")
+        )
+    elif db_type == "postgres":
+        db_config = DatabaseConfig(
+            host=os.getenv("POSTGRES_HOST"),
+            port=int(os.getenv("POSTGRES_PORT")),
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+            name=os.getenv("POSTGRES_DB")
+        )
+        
+    else:
+        raise ValueError(f"Unsupported database type: {db_type}")
+
     return AppConfig(
           env=os.getenv("APP_ENV", "dev"),
           db_type=os.getenv("DB_TYPE", "fake"),
-          database=DatabaseConfig(
-                host=os.getenv("DB_HOST"),
-                port=int(os.getenv("DB_PORT")),
-                user=os.getenv("DB_USER"),
-                password=os.getenv("DB_PASSWORD"),
-                name=os.getenv("DB_NAME"),
-          ),
+          database=db_config,
           jwt=JWTConfig(
               secret_key=os.getenv("SECRET_KEY"),
               algorithm=os.getenv("ALGORITHM", "HS256"),

@@ -4,6 +4,9 @@ from repositories.llm_repository_openrouter import OpenRouterLLMRepository
 from repositories.conversation_repository_mysql import ConversationRepositoryMySQL
 from repositories.message_repository_mysql import MessageRepositoryMySQL
 
+from repositories.conversation_repository_postgres import ConversationRepositoryPostgres
+from repositories.message_repository_postgres import MessageRepositoryPostgres
+
 from repositories.conversation_repository import ConversationRepository
 from repositories.message_repository import MessageRepository
 from repositories.llm_repository import LLMRepository
@@ -32,8 +35,8 @@ def get_conversation_repository() -> ConversationRepository:
     if db_type == "mysql":
         return ConversationRepositoryMySQL(db_config=settings.database)
     elif db_type == "postgres":
-        # Return PostgreSQL conversation repository here
-        pass
+
+        return ConversationRepositoryPostgres()
     elif db_type == "fake":
         # Return a fake in-memory conversation repository for testing
         pass
@@ -48,8 +51,7 @@ def get_message_repository() -> MessageRepository:
     if db_type == "mysql":
         return MessageRepositoryMySQL(db_config=settings.database)
     elif db_type == "postgres":
-        # Return PostgreSQL message repository here
-        pass
+        return MessageRepositoryPostgres()
     elif db_type == "fake":
         # Return a fake in-memory message repository for testing
         pass
