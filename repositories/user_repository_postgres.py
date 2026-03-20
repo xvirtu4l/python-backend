@@ -16,11 +16,14 @@ class UserRepositoryPostgres(UserRepository):
             cursor.execute(
                 """
                 INSERT INTO users (email, username, password, is_active)
-                VALUES (%s, %s, %s, %s)
+                VALUES (%s, %s, %s, %s) RETURNING *
                 """,
                 (user.email, user.username, user.password, user.is_active),
             )
+            
+            row = cursor.fetchone()
             session.commit()
+            return User.from_db(row)
         except UniqueViolation:
             session.rollback()
             raise DuplicateUserError("Email hoặc tên người dùng đã tồn tại")
@@ -32,7 +35,7 @@ class UserRepositoryPostgres(UserRepository):
         session = get_postgres_connection()
         cursor = session.cursor()
         try:
-            cursor.execute("SELECT email, username, password FROM users")
+            cursor.execute("SELECT id, email, username, password, is_active, created_at, updated_at, avatar_url FROM users")
             rows = cursor.fetchall()
             return [User.from_db(row) for row in rows]
         finally:
@@ -44,7 +47,7 @@ class UserRepositoryPostgres(UserRepository):
         cursor = session.cursor()
         try:
             cursor.execute(
-                "SELECT email, username, password FROM users WHERE username = %s",
+                "SELECT id, email, username, password, is_active, created_at, updated_at, avatar_url FROM users WHERE username = %s",
                 (username,),
             )
             row = cursor.fetchone()
@@ -55,4 +58,93 @@ class UserRepositoryPostgres(UserRepository):
             cursor.close()
             session.close()
             
+    def get_user_by_id(self, user_id):
+        session = get_postgres_connection()
+        cursor = session.cursor()
+        try:
+            cursor.execute("SELECT * FROM users WHERE id = %s", (user_id,))
+            row = cursor.fetchone()
+            if row:
+                return User.from_db(row)
+        finally:
+            cursor.close()
+            session.close()
     
+    def get_user_by_email(self, email):
+        session = get_postgres_connection()
+        cursor = session.cursor()
+        try:
+            cursor.execute("SELECT * FROM users WHERE email = %s", (email,))
+            row = cursor.fetchone()
+            if row:
+                return User.from_db(row)
+        finally:
+            cursor.close()
+            session.close()
+    
+    def set_reset_password_token(self, email: str, token: str, expired_at):
+        session = get_postgres_connection()
+        cursor = session.cursor()
+        try:
+            cursor.execute(
+                """UPDATE users SET reset_token = %s, reset_token_expired_at = %s WHERE email = %s""",
+                (token, expired_at, email)
+            )
+            session.commit()
+        finally:
+            cursor.close()
+            session.close()
+            
+    def get_user_by_reset_token(self, token: str):
+       
+        session = get_postgres_connection()
+        cursor = session.cursor()
+        try:
+            cursor.execute("SELECT * FROM users WHERE reset_token = %s AND reset_token_expired_at > NOW()", (token,))
+            row = cursor.fetchone()
+            if row:
+                return User.from_db(row)
+            else:
+                return None
+        finally:
+            cursor.close()
+            session.close()
+            
+    def update_password(self, user_id: int, hashed_password: str):
+        session = get_postgres_connection()
+        cursor = session.cursor()
+        try:
+            cursor.execute(
+                """UPDATE users SET password = %s WHERE id = %s""",
+                (hashed_password, user_id)
+            )
+            session.commit()
+        finally:
+            cursor.close()
+            session.close()
+            
+    def clear_reset_token(self, user_id: int):
+        session = get_postgres_connection()
+        cursor = session.cursor()
+        try:
+            cursor.execute(
+                """UPDATE users SET reset_token = NULL, reset_token_expired_at = NULL WHERE id = %s""",
+                (user_id,)
+            )
+            session.commit()
+        finally:
+            cursor.close()
+            session.close()
+            
+    def update_avatar(self, user_id: int, avatar_url: str):
+        session = get_postgres_connection()
+        cursor = session.cursor()
+        try:
+            cursor.execute(
+                "UPDATE users SET avatar_url = %s WHERE id = %s",
+                (avatar_url, user_id)
+            )
+            session.commit()
+        finally:
+            cursor.close()
+            session.close()

@@ -24,7 +24,7 @@ class AuthUseCase:
         if not user:
             return None
         
-        token = self.create_token({"sub": user.username})
+        token = self.create_token({"id": user.id, "sub": user.username})
         return token    
     
     def get_current_user(self, token: str):
@@ -51,4 +51,19 @@ class AuthUseCase:
         self.user_usecase.set_reset_password_token(email, token, expired_at)
         return token
     
+    def reset_password(self, token: str, new_password: str):
+        user = self.user_usecase.get_user_by_reset_token(token)
+        if not user:
+            raise BusinessError("Token không hợp lệ hoặc đã hết hạn")
+        self.user_usecase.update_password(user.id, new_password)
+        self.user_usecase.clear_reset_token(user.id)
+        return user
     
+    def change_password(self, user_id: int, old_password: str, new_password: str):
+        user = self.user_usecase.get_user_by_id(user_id)
+        if not user:
+            raise BusinessError("User not Found")
+        if not self.password_hasher.verify_password(old_password, user.password):
+            raise BusinessError("Mật khẩu cũ không đúng")
+        self.user_usecase.update_password(user.id, new_password)
+        return True

@@ -7,3 +7,7 @@ class AuthResponse(BaseModel):
     is_active: bool
     created_at: datetime
     updated_at: datetime
+    avatar_url: str | None = None
+    
+    class Config:
+        from_attributes = True
