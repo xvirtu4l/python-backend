@@ -9,23 +9,26 @@ class ConversationRepositoryPostgres(ConversationRepository):
         
     def create_conversation(self, user_id, title):
         session = get_postgres_connection()
-        cursor = session.cursor(dictionary=True)
+        cursor = session.cursor()
         try:
             cursor.execute(
                 "INSERT INTO conversations (user_id, title) VALUES (%s, %s) RETURNING *",
                 (user_id, title)
             )
-            session.commit()
-            
-            conversation_id = cursor.lastrowid
-            
-            # Fetch the full row with timestamps
-            cursor.execute(
-                "SELECT * FROM conversations WHERE id = %s",
-                (conversation_id,)
-            )
             
             row = cursor.fetchone()
+            session.commit()
+            
+            # conversation_id = cursor.lastrowid
+            
+            # Fetch the full row with timestamps
+            # cursor.execute(
+            #     "SELECT * FROM conversations WHERE id = %s",
+            #     (conversation_id,)
+            # )
+            # row = cursor.fetchone()
+            
+            
             return Conversation.from_db(row)
         except Exception as e:
             session.rollback()
@@ -36,7 +39,7 @@ class ConversationRepositoryPostgres(ConversationRepository):
             
     def get_conversations_by_user_id(self, user_id) -> List[Conversation]:
         session = get_postgres_connection()
-        cursor = session.cursor(dictionary=True)
+        cursor = session.cursor()
         try:
             cursor.execute(
                 "SELECT * FROM conversations WHERE user_id = %s",
@@ -50,7 +53,7 @@ class ConversationRepositoryPostgres(ConversationRepository):
             
     def get_conversation_by_user_id(self, user_id) -> Optional[Conversation]:
         session = get_postgres_connection()
-        cursor = session.cursor(dictionary=True)
+        cursor = session.cursor()
         try:
             cursor.execute(
                 "SELECT * FROM conversations WHERE user_id = %s ORDER BY created_at DESC LIMIT 1",
@@ -66,7 +69,7 @@ class ConversationRepositoryPostgres(ConversationRepository):
             
     def get_conversation_by_id(self, conversation_id) -> Optional[Conversation]:
         session = get_postgres_connection()
-        cursor = session.cursor(dictionary=True)
+        cursor = session.cursor()
         try:
             cursor.execute(
                 "SELECT * FROM conversations WHERE id = %s",

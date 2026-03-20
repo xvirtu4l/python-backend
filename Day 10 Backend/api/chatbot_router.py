@@ -1,9 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
-from pydantic import BaseModel, Field
-from typing import List, Optional
+from typing import List
 from usecases.chatbot_usecase import ChatbotUseCase
 from factories.chatbot_factory import get_chatbot_usecase
-from domain.exceptions import BusinessError, NotFoundError, AccessDeniedError
+from domain.exceptions import BusinessError, NotFoundError, AccessDeniedError, RateLimitError
 from security.oauth2 import oauth2_scheme
 
 from schemas.chatbot_schema import (
@@ -35,9 +34,21 @@ async def chat(
         
         return ChatResponse(
             conversation_id=user_msg.conversation_id,
-            user_message={"role": user_msg.role, "content": user_msg.content},
-            assistant_message={"role": assistant_msg.role, "content": assistant_msg.content}
+            user_message=MessageResponse(
+                id=user_msg.id,
+                role=user_msg.role,
+                content=user_msg.content,
+                created_at=user_msg.created_at.isoformat()
+            ),
+            assistant_message=MessageResponse(
+                id=assistant_msg.id,
+                role=assistant_msg.role,
+                content=assistant_msg.content,
+                created_at=assistant_msg.created_at.isoformat()
+            )
         )
+    except RateLimitError as e:
+        raise HTTPException(status_code=429, detail=str(e))
     except BusinessError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
@@ -45,7 +56,7 @@ async def chat(
         # import traceback
         # traceback.print_exc()
         # raise
-    
+
 @router.get("/conversations", response_model=List[ConversationResponse])
 async def list_conversations(
     request: Request,

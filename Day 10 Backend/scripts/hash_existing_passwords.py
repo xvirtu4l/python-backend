@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import mysql.connector
-from security.password_hasher import hash_password
+from usecases.password_hasher import hash_password
 
 db_config = {
     "host": "localhost",

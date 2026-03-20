@@ -1,4 +1,5 @@
 from pydantic import BaseModel, Field
+from datetime import datetime
 from typing import List, Optional
 
 # ========== Request Schemas ==========
@@ -11,20 +12,25 @@ class ChatRequest(BaseModel):
 
 class ChatResponse(BaseModel):
     conversation_id: int
-    user_message: dict
-    assistant_message: dict
-
 class MessageResponse(BaseModel):
     id: int
     role: str
     content: str
-    created_at: Optional[str] = None
+    created_at: datetime
+
+class ChatResponse(BaseModel):
+    conversation_id: int
+    user_message: MessageResponse
+    assistant_message: MessageResponse
 
 class ConversationResponse(BaseModel):
     id: int
     title: str
-    created_at: Optional[str] = None
-    updated_at: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    
+    class Config:
+        from_attributes = True
 
 class ConversationDetailResponse(BaseModel):
     conversation: ConversationResponse

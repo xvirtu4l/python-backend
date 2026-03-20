@@ -6,10 +6,10 @@ def get_postgres_connection():
     settings = get_settings()
     db_config = settings.database
     return psycopg2.connect(
-        host=settings.POSTGRES_HOST,
-        port=settings.POSTGRES_PORT,
-        user=settings.POSTGRES_USER,
-        password=settings.POSTGRES_PASSWORD,
-        dbname=settings.POSTGRES_DB,
+        host=db_config.host,
+        port=db_config.port,
+        user=db_config.user,
+        password=db_config.password,
+        dbname=db_config.name,
         cursor_factory=RealDictCursor
     )

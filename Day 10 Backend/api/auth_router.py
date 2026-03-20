@@ -42,7 +42,8 @@ def read_me(
         username = user.username,
         is_active= user.is_active,
         created_at = user.created_at,
-        updated_at = user.updated_at
+        updated_at = user.updated_at,
+        avatar_url = user.avatar_url
     )
     
 @router.post("/forgot-password")

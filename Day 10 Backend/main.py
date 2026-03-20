@@ -1,5 +1,6 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from fastapi.middleware.cors import CORSMiddleware
 from domain.exceptions import BusinessError, DuplicateUserError
 from api.user_router import router as user_router
 from api.auth_router import router as auth_router
@@ -9,6 +10,16 @@ from security.jwt_middleware import JWTMiddleware
 import traceback
 
 app = FastAPI(title="Quản lý người dùng")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://127.0.0.1:3000",
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.add_middleware(JWTMiddleware)
 app.include_router(user_router)
 app.include_router(auth_router)
@@ -21,7 +32,7 @@ def root():
     return {"message": "Hello, World!"}
 
 @app.exception_handler(BusinessError)
-def bussiness_exception_handler(request: Request, exc: BusinessError):
+def business_exception_handler(request: Request, exc: BusinessError):
     return JSONResponse(
         status_code=400,
         content={"detail": exc.message},

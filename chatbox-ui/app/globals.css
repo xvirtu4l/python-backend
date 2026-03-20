@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+:root {
+  --background: #e7ddd0;
+  --foreground: #1b1613;
+  --surface: rgba(248, 241, 231, 0.9);
+  --surface-strong: #f4ecdf;
+  --surface-muted: #dccbb6;
+  --border: rgba(66, 50, 35, 0.18);
+  --accent: #bb5a34;
+  --accent-deep: #8d3b1d;
+  --accent-soft: #f2d4c3;
+  --highlight: #ffd166;
+  --highlight-strong: #ffbf3c;
+  --highlight-text: #2a2118;
+  --ink-soft: #5f5146;
+  --shadow-panel: 0 24px 60px rgba(59, 40, 25, 0.16);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans), "Segoe UI", sans-serif;
+  background-image:
+    radial-gradient(circle at top left, rgba(255, 248, 238, 0.65), transparent 28%),
+    radial-gradient(circle at top right, rgba(187, 122, 82, 0.2), transparent 22%),
+    linear-gradient(135deg, #dcd0c1 0%, #d3c1ad 52%, #decebc 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(110, 89, 71, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(110, 89, 71, 0.035) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: radial-gradient(circle at center, black 60%, transparent 100%);
+}
+
+button,
+input,
+textarea {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(187, 90, 52, 0.18);
+}
+
+.app-shell {
+  background: linear-gradient(180deg, rgba(246, 238, 227, 0.88), rgba(232, 218, 201, 0.94));
+  backdrop-filter: blur(16px);
+  box-shadow: var(--shadow-panel);
+}
+
+.panel-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-panel);
+  backdrop-filter: blur(14px);
+}
+
+.surface-soft {
+  background: rgba(246, 237, 226, 0.82);
+  border: 1px solid var(--border);
+}
+
+.chat-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(141, 59, 29, 0.35) transparent;
+}
+
+.chat-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(141, 59, 29, 0.28);
+  border-radius: 999px;
+}
+
+.chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}

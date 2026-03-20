@@ -15,3 +15,7 @@ class NotFoundError(BusinessError):
 class AccessDeniedError(BusinessError):
     """Raised when a user tries to access a resource they don't have permission for."""
     pass
+
+class RateLimitError(BusinessError):
+    """Raised when a user exceeds a request rate limit."""
+    pass

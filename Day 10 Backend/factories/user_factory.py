@@ -4,6 +4,7 @@ from repositories.user_repository_fake import FakeUserRepository
 from repositories.user_repository_postgres import UserRepositoryPostgres
 from usecases.user_usecase import UserUseCase
 from security.password_hasher_interface import PasswordHasherImpl
+from storage.minio_conn import minio_client
 
 def get_user_usecase():
     settings = get_settings()
@@ -19,4 +20,4 @@ def get_user_usecase():
     else:
         raise ValueError(f"Unsupported DB_TYPE: {settings.db_type}")
     password_hasher = PasswordHasherImpl()
-    return UserUseCase(repo, password_hasher)
+    return UserUseCase(repo, password_hasher, minio_client=minio_client, bucket="avatars")

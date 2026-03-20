@@ -6,8 +6,8 @@ class User:
         username,
         password,
         is_active: bool = True,
-        created_at=None,
-        updated_at=None,
+        created_at= None,
+        updated_at= None,
         avatar_url: str | None = None,
         validate: bool = True
     ):

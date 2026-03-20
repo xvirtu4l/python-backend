@@ -1,7 +1,7 @@
 import httpx
 from typing import Any, List, Dict
 from repositories.llm_repository import LLMRepository
-from config.settings import LLMConfig, get_settings
+from config.settings import LLMConfig
 
 class OpenRouterLLMRepository(LLMRepository):
     def __init__(self, config: LLMConfig):
@@ -30,6 +30,6 @@ class OpenRouterLLMRepository(LLMRepository):
         except httpx.HTTPError as e:
             print(f"Error generating LLM response: {e}")
             raise Exception("Failed to generate response from LLM") from e
-        
+
     async def close(self):
         await self.client.aclose()

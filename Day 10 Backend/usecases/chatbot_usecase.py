@@ -1,3 +1,5 @@
+from collections import defaultdict, deque
+from time import time
 from typing import List, Optional
 from domain.entities.conversation import Conversation
 from domain.entities.message import Message
@@ -5,7 +7,16 @@ from repositories.conversation_repository import ConversationRepository
 from repositories.message_repository import MessageRepository
 from repositories.llm_repository import LLMRepository
 from repositories.user_repository import UserRepository
-from domain.exceptions import BusinessError, AccessDeniedError, NotFoundError
+from domain.exceptions import BusinessError, AccessDeniedError, NotFoundError, RateLimitError
+
+MAX_USER_MESSAGE_LENGTH = 2000
+MAX_CONVERSATIONS_PER_USER = 50
+MAX_MESSAGES_PER_CONVERSATION = 100
+MAX_HISTORY_MESSAGES_FOR_MODEL = 20
+RATE_LIMIT_WINDOW_SECONDS = 60
+RATE_LIMIT_REQUESTS_PER_WINDOW = 10
+
+USER_REQUEST_LOG: dict[int, deque[float]] = defaultdict(deque)
 
 class ChatbotUseCase:
     def __init__(
@@ -24,42 +35,23 @@ class ChatbotUseCase:
     async def process_message(
         self, user_id: int, user_message: str, conversation_id: Optional[int] = None
     ):
-        
-        user = self.user_repo.get_user_by_id(user_id)
-        if not user:
-            raise NotFoundError("User not found")
-        if not user.is_active:
-            raise BusinessError("Account disabled.")
-        
-        if conversation_id:
-            conversation = self.conversation_repo.get_conversation_by_id(conversation_id)
-            if not conversation:
-                raise NotFoundError("Conversation not found")
-            if conversation.user_id != user_id:
-                raise AccessDeniedError("Access denied to this conversation")
-        
-        if conversation_id is None:
-            conversation = self.conversation_repo.create_conversation(user_id, title=user_message[:50] if len(user_message) > 50 else user_message)
-            conversation_id = conversation.id
-            message_history = []
-            
-        else:
-            previous_message = self.message_repo.get_messages_by_conversation_id(conversation_id)
-            message_history = [
-                {"role": msg.role, "content": msg.content} for msg in previous_message
-            ]
+        normalized_message, conversation_id, message_history = self._prepare_message_context(
+            user_id=user_id,
+            user_message=user_message,
+            conversation_id=conversation_id,
+        )
             
         user_msg = self.message_repo.add_message(
             Message(
                 id=None,
                 conversation_id=conversation_id,
                 role="user",
-                content=user_message,
+                content=normalized_message,
                 created_at=str | None
             )
         )
         
-        all_messages = message_history + [{"role": "user", "content": user_message}]
+        all_messages = message_history + [{"role": "user", "content": normalized_message}]
         try:
             assistant_response = await self.llm_repo.generate_response(all_messages)
         except Exception as e:
@@ -75,7 +67,7 @@ class ChatbotUseCase:
             )
         )
         return user_msg, assistant_msg
-    
+
     def get_conversation_history(self, user_id: int, conversation_id: int) -> List[Message]:
         conversation = self.conversation_repo.get_conversation_by_id(conversation_id)
         if not conversation:
@@ -99,3 +91,70 @@ class ChatbotUseCase:
         
         # Note: Should check if the table has cascading delete for messages, otherwise need to delete messages first
         self.conversation_repo.delete_conversation(conversation_id)
+
+    def _prepare_message_context(
+        self, user_id: int, user_message: str, conversation_id: Optional[int] = None
+    ):
+        normalized_message = user_message.strip()
+
+        if not normalized_message:
+            raise BusinessError("Message cannot be empty")
+        if len(normalized_message) > MAX_USER_MESSAGE_LENGTH:
+            raise BusinessError(
+                f"Message too long. Maximum length is {MAX_USER_MESSAGE_LENGTH} characters"
+            )
+
+        self._enforce_rate_limit(user_id)
+
+        user = self.user_repo.get_user_by_id(user_id)
+        if not user:
+            raise NotFoundError("User not found")
+        if not user.is_active:
+            raise BusinessError("Account disabled.")
+        
+        if conversation_id:
+            conversation = self.conversation_repo.get_conversation_by_id(conversation_id)
+            if not conversation:
+                raise NotFoundError("Conversation not found")
+            if conversation.user_id != user_id:
+                raise AccessDeniedError("Access denied to this conversation")
+        
+        if conversation_id is None:
+            user_conversations = self.conversation_repo.get_conversations_by_user_id(user_id)
+            if len(user_conversations) >= MAX_CONVERSATIONS_PER_USER:
+                raise BusinessError(
+                    f"Conversation limit reached. Maximum is {MAX_CONVERSATIONS_PER_USER} conversations per user"
+                )
+
+            conversation = self.conversation_repo.create_conversation(
+                user_id,
+                title=normalized_message[:50] if len(normalized_message) > 50 else normalized_message
+            )
+            conversation_id = conversation.id
+            message_history = []
+        else:
+            previous_message = self.message_repo.get_messages_by_conversation_id(conversation_id)
+            if len(previous_message) >= MAX_MESSAGES_PER_CONVERSATION:
+                raise BusinessError(
+                    f"Conversation limit reached. Maximum is {MAX_MESSAGES_PER_CONVERSATION} messages per conversation"
+                )
+            message_history = [
+                {"role": msg.role, "content": msg.content}
+                for msg in previous_message[-MAX_HISTORY_MESSAGES_FOR_MODEL:]
+            ]
+
+        return normalized_message, conversation_id, message_history
+
+    def _enforce_rate_limit(self, user_id: int):
+        now = time()
+        user_requests = USER_REQUEST_LOG[user_id]
+
+        while user_requests and now - user_requests[0] > RATE_LIMIT_WINDOW_SECONDS:
+            user_requests.popleft()
+
+        if len(user_requests) >= RATE_LIMIT_REQUESTS_PER_WINDOW:
+            raise RateLimitError(
+                f"Too many messages sent. Limit is {RATE_LIMIT_REQUESTS_PER_WINDOW} requests per {RATE_LIMIT_WINDOW_SECONDS} seconds"
+            )
+
+        user_requests.append(now)

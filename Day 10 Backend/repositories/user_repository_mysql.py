@@ -10,13 +10,18 @@ class UserRepositoryMySQL(UserRepository):
 
     def add_user(self, user: User):
         session = get_connection(self.db_config)
-        cursor = session.cursor()
+        cursor = session.cursor(dictionary=True)
         try:
             cursor.execute(
                 """INSERT INTO users (email, username, password, is_active) VALUES (%s, %s, %s, %s)""",
                 (user.email, user.username, user.password, user.is_active)
             )
             session.commit()
+            
+            user_id = cursor.lastrowid
+            cursor.execute("""SELECT * FROM users WHERE id = %s""", (user_id,))
+            row = cursor.fetchone()
+            return User.from_db(row)
         except IntegrityError:
             session.rollback()
             raise DuplicateUserError("Email hoặc tên người dùng đã tồn tại")
@@ -28,7 +33,7 @@ class UserRepositoryMySQL(UserRepository):
         session = get_connection(self.db_config)
         cursor = session.cursor(dictionary=True)
         try:
-            cursor.execute("SELECT * FROM users")
+            cursor.execute("SELECT id, email, username, password, is_active, created_at, updated_at, avatar_url FROM users")
             rows = cursor.fetchall()
             return [User.from_db(row) for row in rows]
         finally:

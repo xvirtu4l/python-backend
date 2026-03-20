@@ -12,7 +12,10 @@ class AuthUseCase:
         self.decode_token = decode_token
 
     def authenticate_user(self, username: str, password: str):
-        user = self.user_usecase.get_user_by_username(username)
+        credential = username.strip()
+        user = self.user_usecase.get_user_by_username(credential)
+        if not user and "@" in credential:
+            user = self.user_usecase.get_user_by_email(credential)
         if not user:
             return None
         if not self.password_hasher.verify_password(password, user.password):
@@ -55,8 +58,7 @@ class AuthUseCase:
         user = self.user_usecase.get_user_by_reset_token(token)
         if not user:
             raise BusinessError("Token không hợp lệ hoặc đã hết hạn")
-        hashed = self.password_hasher.hash_password(new_password)
-        self.user_usecase.update_password(user.id, hashed)
+        self.user_usecase.update_password(user.id, new_password)
         self.user_usecase.clear_reset_token(user.id)
         return user
     
@@ -66,6 +68,5 @@ class AuthUseCase:
             raise BusinessError("User not Found")
         if not self.password_hasher.verify_password(old_password, user.password):
             raise BusinessError("Mật khẩu cũ không đúng")
-        hashed = self.password_hasher.hash_password(new_password)
-        self.user_usecase.update_password(user.id, hashed)
+        self.user_usecase.update_password(user.id, new_password)
         return True
