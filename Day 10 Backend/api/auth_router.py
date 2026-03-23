@@ -1,10 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, Request, UploadFile, File
+from urllib.parse import quote
+
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.security import OAuth2PasswordRequestForm
 
+from config.settings import get_settings
 from factories.auth_factory import get_auth_usecase
+from factories.email_factory import get_email_service
+from services.email_service import EmailService
 from usecases.auth_usecase import AuthUseCase
 
-from security.jwt_service import create_access_token, decode_token
+from security.jwt_service import create_access_token
 from security.oauth2 import oauth2_scheme
 from security.token_blacklist import blacklisted_tokens
 from schemas.auth_schema import AuthResponse
@@ -13,6 +18,10 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 def auth_service_dep() -> AuthUseCase:
     return get_auth_usecase()
+
+
+def email_service_dep() -> EmailService:
+    return get_email_service()
 
 @router.post("/login")
 async def login(
@@ -47,12 +56,22 @@ def read_me(
     )
     
 @router.post("/forgot-password")
-def forgot_password(email: str, auth_usecase: AuthUseCase = Depends(auth_service_dep)):
-    token = auth_usecase.forgot_password(email)
+def forgot_password(
+    email: str,
+    auth_usecase: AuthUseCase = Depends(auth_service_dep),
+    email_service: EmailService = Depends(email_service_dep),
+):
+    settings = get_settings()
+    if not settings.email.enabled:
+        raise HTTPException(status_code=503, detail="Email service is not enabled")
+
+    reset_payload = auth_usecase.forgot_password(email)
+    reset_link = f"{settings.frontend_url.rstrip('/')}/reset-password?token={quote(reset_payload['token'])}"
+    email_service.send_password_reset_email(reset_payload["email"], reset_link)
+
     return {
-        "message": "Token reset password đã được gửi",
-        "token": token
-        }
+        "message": "Password reset email sent successfully",
+    }
     
 @router.post("/reset-password")
 def reset_password(token: str, new_password: str, auth_usecase: AuthUseCase = Depends(auth_service_dep)):

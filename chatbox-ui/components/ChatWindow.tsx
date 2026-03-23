@@ -44,8 +44,8 @@ export default function ChatWindow({ messages, loading = false, error }: Props) 
   if (loading) {
     return (
       <div className="chat-scroll flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-6 py-8">
-        <div className="flex items-center gap-3 rounded-full border border-[var(--border)] bg-white/70 px-5 py-3 text-sm text-[var(--ink-soft)]">
-          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgba(187,90,52,0.2)] border-t-[var(--accent)]"></div>
+        <div className="flex items-center gap-3 rounded-full border border-(--border) bg-white/70 px-5 py-3 text-sm text-(--ink-soft)">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-[rgba(187,90,52,0.2)] border-t-(--accent)"></div>
           Fetching the conversation...
         </div>
       </div>
@@ -55,7 +55,7 @@ export default function ChatWindow({ messages, loading = false, error }: Props) 
   if (error) {
     return (
       <div className="chat-scroll flex min-h-0 flex-1 items-center justify-center overflow-y-auto px-6 py-8">
-        <div className="rounded-3xl border border-[#e6b8a7] bg-[#fff3ee] px-6 py-5 text-center text-[var(--accent-deep)] shadow-[0_12px_30px_rgba(139,68,43,0.08)]">
+        <div className="rounded-3xl border border-[#e6b8a7] bg-[#fff3ee] px-6 py-5 text-center text-(--accent-deep) shadow-[0_12px_30px_rgba(139,68,43,0.08)]">
           <div className="text-xs uppercase tracking-[0.28em] opacity-70">Chat Error</div>
           <div className="mt-2 text-sm">
           {error}
@@ -73,14 +73,14 @@ export default function ChatWindow({ messages, loading = false, error }: Props) 
     >
       {messages.length === 0 ? (
         <div className="flex h-full min-h-112 items-center justify-center">
-          <div className="max-w-md rounded-[28px] border border-dashed border-[var(--border)] bg-white/45 px-8 py-10 text-center">
-            <div className="text-xs uppercase tracking-[0.3em] text-[var(--ink-soft)]">
+          <div className="max-w-md rounded-[28px] border border-dashed border-(--border) bg-white/45 px-8 py-10 text-center">
+            <div className="text-xs uppercase tracking-[0.3em] text-(--ink-soft)">
               New Thread
             </div>
             <div className="mt-3 text-3xl font-semibold leading-tight">
               Start with one clear message.
             </div>
-            <p className="mt-4 text-sm leading-7 text-[var(--ink-soft)]">
+            <p className="mt-4 text-sm leading-7 text-(--ink-soft)">
               Ask a question, paste an idea, or continue a workflow. Your assistant reply will appear here.
             </p>
           </div>
@@ -92,8 +92,8 @@ export default function ChatWindow({ messages, loading = false, error }: Props) 
             key={m.id ?? `${m.role}-${m.created_at ?? "pending"}-${index}`}
             className={`max-w-[85%] rounded-[26px] px-5 py-4 shadow-[0_18px_34px_rgba(69,48,28,0.08)] ${
               m.role === "user" 
-              ? "self-end bg-[linear-gradient(135deg,var(--highlight),var(--highlight-strong))] text-[var(--highlight-text)]"
-              : "surface-soft self-start text-[var(--foreground)]"
+              ? "self-end bg-[linear-gradient(135deg,var(--highlight),var(--highlight-strong))] text-(--highlight-text)"
+              : "surface-soft self-start text-foreground"
             }`}
           >
             <div className="mb-2 text-[10px] uppercase tracking-[0.26em] opacity-65">
@@ -103,7 +103,7 @@ export default function ChatWindow({ messages, loading = false, error }: Props) 
               {m.content}
             </div>
             {m.created_at && (
-              <div className={`mt-3 text-xs ${m.role === "user" ? "text-[rgba(42,33,24,0.68)]" : "text-[var(--ink-soft)]"}`}>
+              <div className={`mt-3 text-xs ${m.role === "user" ? "text-[rgba(42,33,24,0.68)]" : "text-(--ink-soft)"}`}>
                 {new Date(m.created_at).toLocaleTimeString()}
               </div>
             )}

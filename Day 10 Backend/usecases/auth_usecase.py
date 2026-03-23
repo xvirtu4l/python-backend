@@ -52,7 +52,12 @@ class AuthUseCase:
         token = str(uuid.uuid4())
         expired_at = datetime.now(timezone.utc) + timedelta(minutes=15)
         self.user_usecase.set_reset_password_token(email, token, expired_at)
-        return token
+        return {
+            "email": user.email,
+            "username": user.username,
+            "token": token,
+            "expired_at": expired_at,
+        }
     
     def reset_password(self, token: str, new_password: str):
         user = self.user_usecase.get_user_by_reset_token(token)

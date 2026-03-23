@@ -33,6 +33,18 @@ class LLMConfig:
     base_url: str
     http_referer: str
     x_title: str
+
+@dataclass
+class EmailConfig:
+    enabled: bool
+    smtp_host: str
+    smtp_port: int
+    smtp_username: str
+    smtp_password: str
+    from_email: str
+    from_name: str
+    use_tls: bool
+    use_ssl: bool
     
 @dataclass
 class AppConfig:
@@ -42,6 +54,15 @@ class AppConfig:
     jwt: JWTConfig
     minio: MinIOConfig
     llm: LLMConfig
+    email: EmailConfig
+    frontend_url: str
+
+
+def _get_bool_env(name: str, default: bool = False) -> bool:
+    value = os.getenv(name)
+    if value is None:
+        return default
+    return value.strip().lower() in {"1", "true", "yes", "on"}
 
     
 def get_settings() -> AppConfig:
@@ -89,5 +110,17 @@ def get_settings() -> AppConfig:
             base_url=os.getenv("LLM_BASE_URL", "https://openrouter.ai/api/v1"),
             http_referer=os.getenv("LLM_HTTP_REFERER", "http://localhost:8000"),
             x_title=os.getenv("LLM_X_TITLE", "Chatbot App")
-        )
+        ),
+          email=EmailConfig(
+            enabled=_get_bool_env("EMAIL_ENABLED", False),
+            smtp_host=os.getenv("SMTP_HOST", ""),
+            smtp_port=int(os.getenv("SMTP_PORT", "587")),
+            smtp_username=os.getenv("SMTP_USERNAME", ""),
+            smtp_password=os.getenv("SMTP_PASSWORD", ""),
+            from_email=os.getenv("SMTP_FROM_EMAIL", ""),
+            from_name=os.getenv("SMTP_FROM_NAME", "Chatbox"),
+            use_tls=_get_bool_env("SMTP_USE_TLS", True),
+            use_ssl=_get_bool_env("SMTP_USE_SSL", False)
+        ),
+          frontend_url=os.getenv("FRONTEND_URL", "http://localhost:3000")
     )
