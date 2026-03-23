@@ -1,6 +1,8 @@
 from collections import defaultdict, deque
 from time import time
 from typing import List, Optional
+
+from config.settings import ChatConfig
 from domain.entities.conversation import Conversation
 from domain.entities.message import Message
 from repositories.conversation_repository import ConversationRepository
@@ -8,13 +10,6 @@ from repositories.message_repository import MessageRepository
 from repositories.llm_repository import LLMRepository
 from repositories.user_repository import UserRepository
 from domain.exceptions import BusinessError, AccessDeniedError, NotFoundError, RateLimitError
-
-MAX_USER_MESSAGE_LENGTH = 2000
-MAX_CONVERSATIONS_PER_USER = 50
-MAX_MESSAGES_PER_CONVERSATION = 100
-MAX_HISTORY_MESSAGES_FOR_MODEL = 20
-RATE_LIMIT_WINDOW_SECONDS = 60
-RATE_LIMIT_REQUESTS_PER_WINDOW = 10
 
 USER_REQUEST_LOG: dict[int, deque[float]] = defaultdict(deque)
 
@@ -24,12 +19,14 @@ class ChatbotUseCase:
         message_repo: MessageRepository,
         conversation_repo: ConversationRepository,
         llm_repo: LLMRepository,
-        user_repo: UserRepository
+        user_repo: UserRepository,
+        chat_config: ChatConfig,
     ):
         self.message_repo = message_repo
         self.conversation_repo = conversation_repo
         self.llm_repo = llm_repo
         self.user_repo = user_repo
+        self.chat_config = chat_config
         
         
     async def process_message(
@@ -99,9 +96,9 @@ class ChatbotUseCase:
 
         if not normalized_message:
             raise BusinessError("Message cannot be empty")
-        if len(normalized_message) > MAX_USER_MESSAGE_LENGTH:
+        if len(normalized_message) > self.chat_config.max_user_message_length:
             raise BusinessError(
-                f"Message too long. Maximum length is {MAX_USER_MESSAGE_LENGTH} characters"
+                f"Message too long. Maximum length is {self.chat_config.max_user_message_length} characters"
             )
 
         self._enforce_rate_limit(user_id)
@@ -121,9 +118,9 @@ class ChatbotUseCase:
         
         if conversation_id is None:
             user_conversations = self.conversation_repo.get_conversations_by_user_id(user_id)
-            if len(user_conversations) >= MAX_CONVERSATIONS_PER_USER:
+            if len(user_conversations) >= self.chat_config.max_conversations_per_user:
                 raise BusinessError(
-                    f"Conversation limit reached. Maximum is {MAX_CONVERSATIONS_PER_USER} conversations per user"
+                    f"Conversation limit reached. Maximum is {self.chat_config.max_conversations_per_user} conversations per user"
                 )
 
             conversation = self.conversation_repo.create_conversation(
@@ -134,13 +131,13 @@ class ChatbotUseCase:
             message_history = []
         else:
             previous_message = self.message_repo.get_messages_by_conversation_id(conversation_id)
-            if len(previous_message) >= MAX_MESSAGES_PER_CONVERSATION:
+            if len(previous_message) >= self.chat_config.max_messages_per_conversation:
                 raise BusinessError(
-                    f"Conversation limit reached. Maximum is {MAX_MESSAGES_PER_CONVERSATION} messages per conversation"
+                    f"Conversation limit reached. Maximum is {self.chat_config.max_messages_per_conversation} messages per conversation"
                 )
             message_history = [
                 {"role": msg.role, "content": msg.content}
-                for msg in previous_message[-MAX_HISTORY_MESSAGES_FOR_MODEL:]
+                for msg in previous_message[-self.chat_config.max_history_messages_for_model:]
             ]
 
         return normalized_message, conversation_id, message_history
@@ -149,12 +146,17 @@ class ChatbotUseCase:
         now = time()
         user_requests = USER_REQUEST_LOG[user_id]
 
-        while user_requests and now - user_requests[0] > RATE_LIMIT_WINDOW_SECONDS:
+        while (
+            user_requests
+            and now - user_requests[0] > self.chat_config.rate_limit_window_seconds
+        ):
             user_requests.popleft()
 
-        if len(user_requests) >= RATE_LIMIT_REQUESTS_PER_WINDOW:
+        if len(user_requests) >= self.chat_config.rate_limit_requests_per_window:
             raise RateLimitError(
-                f"Too many messages sent. Limit is {RATE_LIMIT_REQUESTS_PER_WINDOW} requests per {RATE_LIMIT_WINDOW_SECONDS} seconds"
+                "Too many messages sent. "
+                f"Limit is {self.chat_config.rate_limit_requests_per_window} requests "
+                f"per {self.chat_config.rate_limit_window_seconds} seconds"
             )
 
         user_requests.append(now)

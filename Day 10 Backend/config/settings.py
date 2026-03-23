@@ -45,6 +45,15 @@ class EmailConfig:
     from_name: str
     use_tls: bool
     use_ssl: bool
+
+@dataclass
+class ChatConfig:
+    max_user_message_length: int
+    max_conversations_per_user: int
+    max_messages_per_conversation: int
+    max_history_messages_for_model: int
+    rate_limit_window_seconds: int
+    rate_limit_requests_per_window: int
     
 @dataclass
 class AppConfig:
@@ -55,6 +64,7 @@ class AppConfig:
     minio: MinIOConfig
     llm: LLMConfig
     email: EmailConfig
+    chat: ChatConfig
     frontend_url: str
 
 
@@ -121,6 +131,14 @@ def get_settings() -> AppConfig:
             from_name=os.getenv("SMTP_FROM_NAME", "Chatbox"),
             use_tls=_get_bool_env("SMTP_USE_TLS", True),
             use_ssl=_get_bool_env("SMTP_USE_SSL", False)
+        ),
+          chat=ChatConfig(
+            max_user_message_length=int(os.getenv("CHAT_MAX_USER_MESSAGE_LENGTH", "2000")),
+            max_conversations_per_user=int(os.getenv("CHAT_MAX_CONVERSATIONS_PER_USER", "50")),
+            max_messages_per_conversation=int(os.getenv("CHAT_MAX_MESSAGES_PER_CONVERSATION", "100")),
+            max_history_messages_for_model=int(os.getenv("CHAT_MAX_HISTORY_MESSAGES_FOR_MODEL", "20")),
+            rate_limit_window_seconds=int(os.getenv("CHAT_RATE_LIMIT_WINDOW_SECONDS", "60")),
+            rate_limit_requests_per_window=int(os.getenv("CHAT_RATE_LIMIT_REQUESTS_PER_WINDOW", "10"))
         ),
           frontend_url=os.getenv("FRONTEND_URL", "http://localhost:3000")
     )

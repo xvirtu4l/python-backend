@@ -62,6 +62,7 @@ def get_message_repository() -> MessageRepository:
 
 
 def get_chatbot_usecase() -> ChatbotUseCase:
+    settings = get_settings()
     message_repo = get_message_repository()
     conversation_repo = get_conversation_repository()
     llm_repo = get_llm_repository()
@@ -71,5 +72,6 @@ def get_chatbot_usecase() -> ChatbotUseCase:
         message_repo=message_repo,
         conversation_repo=conversation_repo,
         llm_repo=llm_repo,
-        user_repo=user_repo
+        user_repo=user_repo,
+        chat_config=settings.chat,
     )
