@@ -23,6 +23,11 @@ export default function Home() {
   const [conversationError, setConversationError] = useState<string | null>(null);
   const [chatError, setChatError] = useState<string | null>(null);
   const skipNextMessageReloadRef = useRef(false);
+  const currentChatIdRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    currentChatIdRef.current = currentChatId;
+  }, [currentChatId]);
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -114,24 +119,70 @@ export default function Home() {
     loadMessages();
   }, [currentChatId]);
 
+  const wait = (ms: number) =>
+    new Promise((resolve) => {
+      window.setTimeout(resolve, ms);
+    });
+
+  const pollForAssistantReply = async (
+    conversationId: number,
+    userMessageId?: number
+  ) => {
+    const maxAttempts = 25;
+
+    for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+      await wait(1200);
+
+      try {
+        const fetchedMessages = await chatService.getConversationMessages(conversationId);
+        const assistantReply = fetchedMessages.find(
+          (message) =>
+            message.role === "assistant" &&
+            (userMessageId === undefined || (message.id ?? 0) > userMessageId)
+        );
+
+        if (assistantReply) {
+          if (currentChatIdRef.current === conversationId) {
+            setMessages(fetchedMessages);
+            setChatError(null);
+          }
+
+          await fetchConversations(conversationId, true, false);
+          return;
+        }
+      } catch {
+        // Keep polling quietly; the normal page error state handles persistent failures.
+      }
+    }
+
+    if (currentChatIdRef.current === conversationId) {
+      setMessages((prev) =>
+        prev.map((message) =>
+          message.pending
+            ? {
+                ...message,
+                pending: false,
+                content: "The assistant is taking longer than expected. Please wait a moment and reopen the conversation.",
+              }
+            : message
+        )
+      );
+    }
+  };
+
   const handleSendMessage = async (text: string) => {
     if (!text.trim()) return;
 
-    const newMessage: Message = {
-      id: Date.now(),
-      role: "user",
-      content: text,
-    };
-    setMessages((prev) => [...prev, newMessage]);
-
     try {
       const response = await chatService.sendMessage(text, currentChatId);
-      const persistedMessages: Message[] = [
-        response.user_message,
-        response.assistant_message,
-      ];
+      const pendingAssistantMessage: Message = {
+        id: -(response.user_message.id ?? Date.now()),
+        role: "assistant",
+        content: "Thinking...",
+        pending: true,
+      };
 
-      setMessages((prev) => [...prev.slice(0, -1), ...persistedMessages]);
+      setMessages((prev) => [...prev, response.user_message, pendingAssistantMessage]);
       setChatError(null);
       const updatedConversations = await fetchConversations(
         response.conversation_id,
@@ -151,9 +202,10 @@ export default function Home() {
           setCurrentChatId(matchingConversation.id);
         }
       }
+
+      void pollForAssistantReply(response.conversation_id, response.user_message.id);
     } catch {
       setChatError("Failed to send message");
-      setMessages((prev) => prev.filter((m) => m.id !== newMessage.id));
     }
   };
 

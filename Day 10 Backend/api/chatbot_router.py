@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from typing import List
 from usecases.chatbot_usecase import ChatbotUseCase
 from factories.chatbot_factory import get_chatbot_usecase
@@ -16,9 +16,21 @@ from schemas.chatbot_schema import (
 router = APIRouter(prefix="/chatbot", tags=["chatbot"])
 
 
+async def _generate_assistant_reply_in_background(
+    chatbot_usecase: ChatbotUseCase,
+    conversation_id: int,
+    all_messages: list[dict],
+):
+    await chatbot_usecase.generate_assistant_reply(
+        conversation_id=conversation_id,
+        all_messages=all_messages,
+    )
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(
     request: Request,
+    background_tasks: BackgroundTasks,
     chat_request: ChatRequest,
     chatbot_usecase: ChatbotUseCase = Depends(get_chatbot_usecase),
     token: str = Depends(oauth2_scheme)
@@ -26,10 +38,16 @@ async def chat(
     try:
         current_user = request.state.user
         user_id = current_user["id"]
-        user_msg, assistant_msg = await chatbot_usecase.process_message(
+        user_msg, all_messages = await chatbot_usecase.submit_user_message(
             user_id=user_id,
             user_message=chat_request.message,
             conversation_id=chat_request.conversation_id
+        )
+        background_tasks.add_task(
+            _generate_assistant_reply_in_background,
+            chatbot_usecase,
+            user_msg.conversation_id,
+            all_messages,
         )
         
         return ChatResponse(
@@ -40,12 +58,8 @@ async def chat(
                 content=user_msg.content,
                 created_at=user_msg.created_at.isoformat()
             ),
-            assistant_message=MessageResponse(
-                id=assistant_msg.id,
-                role=assistant_msg.role,
-                content=assistant_msg.content,
-                created_at=assistant_msg.created_at.isoformat()
-            )
+            assistant_message=None,
+            status="pending",
         )
     except RateLimitError as e:
         raise HTTPException(status_code=429, detail=str(e))

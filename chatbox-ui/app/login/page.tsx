@@ -35,7 +35,7 @@ export default function Login() {
           <section className="hidden flex-col justify-between bg-[linear-gradient(160deg,#2f221d_0%,#7f3a22_45%,#c56a44_100%)] p-10 text-[#fff8ef] md:flex">
             <div>
               <div className="mb-6 inline-flex rounded-full border border-white/20 px-4 py-1 text-xs uppercase tracking-[0.28em] text-white/75">
-                ProjectB Chat
+                Project Chatbot
               </div>
               <h1 className="max-w-md text-5xl font-semibold leading-[1.02]">
                 Conversations that feel organized, fast, and calm.

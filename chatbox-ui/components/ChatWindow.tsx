@@ -7,6 +7,7 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   created_at?: string;
+  pending?: boolean;
 }
 
 type Props = {
@@ -90,21 +91,21 @@ export default function ChatWindow({ messages, loading = false, error }: Props) 
         {messages.map((m, index) => (
           <div 
             key={m.id ?? `${m.role}-${m.created_at ?? "pending"}-${index}`}
-            className={`max-w-[85%] rounded-[26px] px-5 py-4 shadow-[0_18px_34px_rgba(69,48,28,0.08)] ${
+            className={`group max-w-[85%] rounded-[26px] px-5 py-4 shadow-[0_18px_34px_rgba(69,48,28,0.08)] ${
               m.role === "user" 
               ? "self-end bg-[linear-gradient(135deg,var(--highlight),var(--highlight-strong))] text-(--highlight-text)"
               : "surface-soft self-start text-foreground"
             }`}
           >
-            <div className="mb-2 text-[10px] uppercase tracking-[0.26em] opacity-65">
+            {/* <div className="mb-2 text-[10px] uppercase tracking-[0.26em] opacity-65">
               {m.role === "user" ? "You" : "Assistant"}
-            </div>
+            </div> */}
             <div className="whitespace-pre-wrap text-sm leading-7">
               {m.content}
             </div>
-            {m.created_at && (
-              <div className={`mt-3 text-xs ${m.role === "user" ? "text-[rgba(42,33,24,0.68)]" : "text-(--ink-soft)"}`}>
-                {new Date(m.created_at).toLocaleTimeString()}
+            {m.pending && (
+              <div className="mt-3 text-xs italic text-(--ink-soft)">
+                Assistant is thinking...
               </div>
             )}
           </div>

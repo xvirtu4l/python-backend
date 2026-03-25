@@ -106,7 +106,7 @@ export default function AuthForm({ onLogin }: AuthFormProps) {
             >
               <Input
                 size="large"
-                placeholder="yourname or you@example.com"
+                placeholder="Your username or youremail@example.com"
                 className="rounded-2xl! border-(--border)! bg-white/70! px-4! py-3!"
               />
             </Form.Item>

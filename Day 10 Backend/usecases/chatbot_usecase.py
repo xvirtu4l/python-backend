@@ -29,7 +29,7 @@ class ChatbotUseCase:
         self.chat_config = chat_config
         
         
-    async def process_message(
+    async def submit_user_message(
         self, user_id: int, user_message: str, conversation_id: Optional[int] = None
     ):
         normalized_message, conversation_id, message_history = self._prepare_message_context(
@@ -47,13 +47,20 @@ class ChatbotUseCase:
                 created_at=str | None
             )
         )
-        
+
         all_messages = message_history + [{"role": "user", "content": normalized_message}]
+        return user_msg, all_messages
+
+    async def generate_assistant_reply(
+        self,
+        conversation_id: int,
+        all_messages: List[dict],
+    ) -> Message:
         try:
             assistant_response = await self.llm_repo.generate_response(all_messages)
         except Exception as e:
-            raise BusinessError("Failed to generate response from AI assistant") from e
-        
+            assistant_response = "Sorry, something went wrong while generating a response."
+
         assistant_msg = self.message_repo.add_message(
             Message(
                 id=None,
@@ -62,6 +69,20 @@ class ChatbotUseCase:
                 content=assistant_response,
                 created_at=str | None
             )
+        )
+        return assistant_msg
+
+    async def process_message(
+        self, user_id: int, user_message: str, conversation_id: Optional[int] = None
+    ):
+        user_msg, all_messages = await self.submit_user_message(
+            user_id=user_id,
+            user_message=user_message,
+            conversation_id=conversation_id,
+        )
+        assistant_msg = await self.generate_assistant_reply(
+            conversation_id=user_msg.conversation_id,
+            all_messages=all_messages,
         )
         return user_msg, assistant_msg
 

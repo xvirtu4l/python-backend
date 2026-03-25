@@ -21,7 +21,8 @@ class MessageResponse(BaseModel):
 class ChatResponse(BaseModel):
     conversation_id: int
     user_message: MessageResponse
-    assistant_message: MessageResponse
+    assistant_message: Optional[MessageResponse] = None
+    status: str = "pending"
 
 class ConversationResponse(BaseModel):
     id: int

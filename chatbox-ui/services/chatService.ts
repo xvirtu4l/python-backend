@@ -14,6 +14,7 @@ export interface Message {
   role: "user" | "assistant";
   content: string;
   created_at?: string;
+  pending?: boolean;
 }
 
 export interface Conversation {
@@ -32,7 +33,8 @@ export interface ChatAPIResponse<T> {
 export interface ChatResponse {
   conversation_id: number;
   user_message: Message;
-  assistant_message: Message;
+  assistant_message?: Message | null;
+  status?: string;
 }
 
 class ChatService {
