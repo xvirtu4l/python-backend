@@ -24,6 +24,7 @@ class MinIOConfig:
     access_key: str
     secret_key: str
     bucket: str
+    secure: bool
     
 @dataclass
 class LLMConfig:
@@ -111,7 +112,8 @@ def get_settings() -> AppConfig:
             endpoint=os.getenv("MINIO_ENDPOINT", "localhost:9000"),
             access_key=os.getenv("MINIO_ACCESS_KEY"),
             secret_key=os.getenv("MINIO_SECRET_KEY"),
-            bucket=os.getenv("MINIO_BUCKET", "avatars")
+            bucket=os.getenv("MINIO_BUCKET", "avatars"),
+            secure=_get_bool_env("MINIO_SECURE", True)
           ),
           llm=LLMConfig(
             provider=os.getenv("LLM_PROVIDER", "openrouter"),
@@ -133,12 +135,12 @@ def get_settings() -> AppConfig:
             use_ssl=_get_bool_env("SMTP_USE_SSL", False)
         ),
           chat=ChatConfig(
-            max_user_message_length=int(os.getenv("CHAT_MAX_USER_MESSAGE_LENGTH", "2000")),
-            max_conversations_per_user=int(os.getenv("CHAT_MAX_CONVERSATIONS_PER_USER", "50")),
-            max_messages_per_conversation=int(os.getenv("CHAT_MAX_MESSAGES_PER_CONVERSATION", "100")),
-            max_history_messages_for_model=int(os.getenv("CHAT_MAX_HISTORY_MESSAGES_FOR_MODEL", "20")),
-            rate_limit_window_seconds=int(os.getenv("CHAT_RATE_LIMIT_WINDOW_SECONDS", "60")),
-            rate_limit_requests_per_window=int(os.getenv("CHAT_RATE_LIMIT_REQUESTS_PER_WINDOW", "10"))
+            max_user_message_length=int(os.getenv("MAX_USER_MESSAGE_LENGTH", "2000")),
+            max_conversations_per_user=int(os.getenv("MAX_CONVERSATIONS_PER_USER", "50")),
+            max_messages_per_conversation=int(os.getenv("MAX_MESSAGES_PER_CONVERSATION", "100")),
+            max_history_messages_for_model=int(os.getenv("MAX_HISTORY_MESSAGES_FOR_MODEL", "20")),
+            rate_limit_window_seconds=int(os.getenv("RATE_LIMIT_WINDOW_SECONDS", "60")),
+            rate_limit_requests_per_window=int(os.getenv("RATE_LIMIT_REQUESTS_PER_WINDOW", "10"))
         ),
           frontend_url=os.getenv("FRONTEND_URL", "http://localhost:3000")
     )
