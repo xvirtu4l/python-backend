@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button, Form, Input, message } from "antd";
-import { useState } from "react";
+import { Suspense, useState } from "react";
 
 import { authService } from "@/services/authService";
 
@@ -13,7 +13,7 @@ type ResetPasswordValues = {
   confirmPassword: string;
 };
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const [form] = Form.useForm<ResetPasswordValues>();
   const [submitting, setSubmitting] = useState(false);
   const [completed, setCompleted] = useState(false);
@@ -169,5 +169,21 @@ export default function ResetPasswordPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center px-6">
+          <div className="panel-card rounded-full px-6 py-4 text-sm text-(--ink-soft)">
+            Loading reset page...
+          </div>
+        </div>
+      }
+    >
+      <ResetPasswordContent />
+    </Suspense>
   );
 }

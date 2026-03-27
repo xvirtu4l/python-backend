@@ -1,6 +1,7 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from config.settings import get_settings
 from domain.exceptions import BusinessError, DuplicateUserError
 from api.user_router import router as user_router
 from api.auth_router import router as auth_router
@@ -9,13 +10,19 @@ from api.chatbot_router import router as chatbot_router
 from security.jwt_middleware import JWTMiddleware
 import traceback
 
+settings = get_settings()
+allowed_origins = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
+
+if settings.frontend_url not in allowed_origins:
+    allowed_origins.append(settings.frontend_url)
+
 app = FastAPI(title="Quản lý người dùng")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
