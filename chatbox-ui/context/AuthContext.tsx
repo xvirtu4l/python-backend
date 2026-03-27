@@ -55,36 +55,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (username: string, password: string) => {
-    setLoading(true);
-    try {
-      const response = await authService.login(username, password);
-      TokenManager.setToken(response.access_token);
-      await refreshUser();
-    } finally {
-      setLoading(false);
-    }
+    const response = await authService.login(username, password);
+    TokenManager.setToken(response.access_token);
+    await refreshUser();
   };
 
   const register = async (email: string, username: string, password: string) => {
-    setLoading(true);
-    try {
-      await authService.register(email, username, password);
-      const response = await authService.login(username, password);
-      TokenManager.setToken(response.access_token);
-      await refreshUser();
-    } finally {
-      setLoading(false);
-    }
+    await authService.register(email, username, password);
+    const response = await authService.login(username, password);
+    TokenManager.setToken(response.access_token);
+    await refreshUser();
   };
 
   const logout = async () => {
-    setLoading(true);
     try {
       await authService.logout();
     } finally {
       TokenManager.removeToken();
       setUser(null);
-      setLoading(false);
     }
   };
 
