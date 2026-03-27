@@ -9,5 +9,5 @@ minio_client = Minio(
     endpoint=settings.minio.endpoint,
     access_key=settings.minio.access_key,
     secret_key=settings.minio.secret_key,
-    secure=True
+    secure=settings.minio.secure
 )	
