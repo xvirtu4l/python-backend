@@ -1,0 +1,13 @@
+fastapi
+uvicorn[standard]
+python-dotenv
+httpx
+minio
+mysql-connector-python
+psycopg2-binary
+pwdlib
+PyJWT
+python-multipart
+pydantic
+email-validator
+typing-extensions
