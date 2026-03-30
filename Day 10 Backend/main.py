@@ -20,6 +20,8 @@ if settings.frontend_url not in allowed_origins:
     allowed_origins.append(settings.frontend_url)
 
 app = FastAPI(title="Quản lý người dùng")
+
+app.add_middleware(JWTMiddleware)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -27,7 +29,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(JWTMiddleware)
+
 app.include_router(user_router)
 app.include_router(auth_router)
 app.include_router(file_router)
