@@ -1,5 +1,5 @@
-import smtplib
-from email.message import EmailMessage
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Content, Email, Mail, To
 
 from domain.exceptions import BusinessError
 
@@ -7,23 +7,15 @@ from domain.exceptions import BusinessError
 class EmailService:
     def __init__(
         self,
-        smtp_host: str,
-        smtp_port: int,
-        smtp_username: str,
-        smtp_password: str,
+        provider: str,
+        sendgrid_api_key: str,
         from_email: str,
         from_name: str,
-        use_tls: bool = True,
-        use_ssl: bool = False,
     ):
-        self.smtp_host = smtp_host
-        self.smtp_port = smtp_port
-        self.smtp_username = smtp_username
-        self.smtp_password = smtp_password
+        self.provider = provider
+        self.sendgrid_api_key = sendgrid_api_key
         self.from_email = from_email
         self.from_name = from_name
-        self.use_tls = use_tls
-        self.use_ssl = use_ssl
 
     def send_password_reset_email(self, recipient_email: str, reset_link: str) -> None:
         subject = "Reset your Chatbox password"
@@ -74,39 +66,35 @@ class EmailService:
     ) -> None:
         self._validate_configuration()
 
-        message = EmailMessage()
-        message["Subject"] = subject
-        message["From"] = f"{self.from_name} <{self.from_email}>"
-        message["To"] = recipient_email
-        message.set_content(plain_text)
-        message.add_alternative(html, subtype="html")
+        if self.provider != "sendgrid":
+            raise BusinessError(f"Email provider not supported: {self.provider}")
+
+        message = Mail(
+            from_email=Email(self.from_email, self.from_name),
+            to_emails=To(recipient_email),
+            subject=subject,
+        )
+        message.add_content(Content("text/plain", plain_text))
+        message.add_content(Content("text/html", html))
 
         try:
-            if self.use_ssl:
-                with smtplib.SMTP_SSL(self.smtp_host, self.smtp_port) as server:
-                    self._authenticate_and_send(server, message)
-            else:
-                with smtplib.SMTP(self.smtp_host, self.smtp_port) as server:
-                    server.ehlo()
-                    if self.use_tls:
-                        server.starttls()
-                        server.ehlo()
-                    self._authenticate_and_send(server, message)
-        except smtplib.SMTPException as exc:
-            raise BusinessError(f"Không thể gửi email đặt lại mật khẩu: {exc}") from exc
-        except OSError as exc:
-            raise BusinessError(f"Không thể kết nối đến máy chủ email: {exc}") from exc
-
-    def _authenticate_and_send(self, server: smtplib.SMTP, message: EmailMessage) -> None:
-        if self.smtp_username:
-            server.login(self.smtp_username, self.smtp_password)
-        server.send_message(message)
+            client = SendGridAPIClient(self.sendgrid_api_key)
+            response = client.send(message)
+            if response.status_code >= 400:
+                raise BusinessError(
+                    f"Không thể gửi email đặt lại mật khẩu: SendGrid returned {response.status_code}"
+                )
+        except BusinessError:
+            raise
+        except Exception as exc:
+            raise BusinessError(
+                f"Không thể gửi email đặt lại mật khẩu: {exc}"
+            ) from exc
 
     def _validate_configuration(self) -> None:
         required_values = {
-            "SMTP_HOST": self.smtp_host,
-            "SMTP_PORT": str(self.smtp_port),
-            "SMTP_FROM_EMAIL": self.from_email,
+            "SENDGRID_API_KEY": self.sendgrid_api_key,
+            "EMAIL_FROM_ADDRESS": self.from_email,
         }
 
         missing = [name for name, value in required_values.items() if not value]
