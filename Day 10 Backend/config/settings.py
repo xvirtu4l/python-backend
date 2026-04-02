@@ -38,14 +38,10 @@ class LLMConfig:
 @dataclass
 class EmailConfig:
     enabled: bool
-    smtp_host: str
-    smtp_port: int
-    smtp_username: str
-    smtp_password: str
+    provider: str
+    sendgrid_api_key: str
     from_email: str
     from_name: str
-    use_tls: bool
-    use_ssl: bool
 
 @dataclass
 class ChatConfig:
@@ -125,14 +121,10 @@ def get_settings() -> AppConfig:
         ),
           email=EmailConfig(
             enabled=_get_bool_env("EMAIL_ENABLED", False),
-            smtp_host=os.getenv("SMTP_HOST", ""),
-            smtp_port=int(os.getenv("SMTP_PORT", "587")),
-            smtp_username=os.getenv("SMTP_USERNAME", ""),
-            smtp_password=os.getenv("SMTP_PASSWORD", ""),
-            from_email=os.getenv("SMTP_FROM_EMAIL", ""),
-            from_name=os.getenv("SMTP_FROM_NAME", "Chatbox"),
-            use_tls=_get_bool_env("SMTP_USE_TLS", True),
-            use_ssl=_get_bool_env("SMTP_USE_SSL", False)
+            provider=os.getenv("EMAIL_PROVIDER", "sendgrid"),
+            sendgrid_api_key=os.getenv("SENDGRID_API_KEY", ""),
+            from_email=os.getenv("EMAIL_FROM_ADDRESS", ""),
+            from_name=os.getenv("EMAIL_FROM_NAME", "Chatbox")
         ),
           chat=ChatConfig(
             max_user_message_length=int(os.getenv("MAX_USER_MESSAGE_LENGTH", "2000")),
